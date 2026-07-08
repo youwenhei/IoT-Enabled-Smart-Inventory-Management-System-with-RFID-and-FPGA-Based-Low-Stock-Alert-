@@ -31,6 +31,9 @@ public: //product creation
 
 	//system function
 	void display() const;
+
+	//getter function
+	int getID() const;
 };
 
 #endif
