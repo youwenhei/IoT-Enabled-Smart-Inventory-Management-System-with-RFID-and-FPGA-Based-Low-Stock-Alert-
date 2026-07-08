@@ -34,6 +34,7 @@ public: //product creation
 
 	//getter function
 	int getID() const;
+	std::string getBarcode() const;
 };
 
 #endif
