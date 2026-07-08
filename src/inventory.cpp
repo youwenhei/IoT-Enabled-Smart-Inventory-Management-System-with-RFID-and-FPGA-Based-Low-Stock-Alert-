@@ -112,3 +112,28 @@ void Inventory::displayProducts() const
 		product.display();
 	}
 }
+
+void Inventory::searchProduct() const
+{
+	int id;
+
+	std::cout << "Please Enter the Product ID to Search: ";
+	std::cin >> id;
+
+	bool found = false;
+
+	for (const auto& product : products)
+	{
+		if (product.getID() == id)
+		{
+			product.display();
+			found = true;
+			break;
+		}
+	}
+
+	if (!found)
+	{
+		std::cout << "The product with ID " << id << " is not found." << std::endl;
+	}
+}
