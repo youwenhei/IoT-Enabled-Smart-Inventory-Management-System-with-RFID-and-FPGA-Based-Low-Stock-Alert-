@@ -18,6 +18,8 @@ public:
 
 	void displayProducts() const;
 	void searchProduct() const;
+
+	bool isBarcodeExist(const std::string& barcode) const;
 };
 
 #endif
