@@ -25,11 +25,14 @@ public:
 	void searchBySupplier() const;
 	void searchByPriceRange() const;
 
-	void sortByPriceAscending();
-	void sortByPriceDescending();
-	void sortByExpiryDate();
+	void sortProducts();
+	void sortByPriceAscending() const;
+	void sortByPriceDescending() const;
+	void sortByExpiryDate() const;
 
 	bool isBarcodeExist(const std::string& barcode) const;
 };
+
+#endif
 
 #endif
