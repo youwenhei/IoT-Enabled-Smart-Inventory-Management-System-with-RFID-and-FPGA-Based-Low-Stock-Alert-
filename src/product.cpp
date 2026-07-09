@@ -67,3 +67,8 @@ double Product::getPrice() const
 {
 	return product_Price;
 }
+
+std::string Product::getSupplier() const
+{
+	return product_Supplier;
+}
