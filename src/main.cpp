@@ -53,9 +53,27 @@ int main()
 	{
 		displayMenu();
 		int option;
-		cin >> option;
 
-		cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
+		while (true)
+		{
+			if (!(std::cin >> option))
+			{
+				cout << "The input is invalid. Please re-enter a number between 1 and 8." << endl;
+				cout << "Thank you for your understanding." << endl;
+				cin.clear();
+				cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
+				pauseScreen();
+				continue;
+			}
+
+			if (option < 1 || option > 8)
+			{
+				cout << "The option is invalid. Please try again " << endl;
+				cout << "Thank you for your understanding." << endl;
+				continue;
+			}
+			break;
+		}
 
 		switch (option)
 		{
