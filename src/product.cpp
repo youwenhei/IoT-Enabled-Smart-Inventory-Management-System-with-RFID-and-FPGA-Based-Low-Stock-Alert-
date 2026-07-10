@@ -82,3 +82,8 @@ double Product::getInventoryValue() const
 {
 	return product_Quantity * product_Price;
 }
+
+double Product::getInventoryValue() const
+{
+	return product_Quantity * product_Price;
+}
