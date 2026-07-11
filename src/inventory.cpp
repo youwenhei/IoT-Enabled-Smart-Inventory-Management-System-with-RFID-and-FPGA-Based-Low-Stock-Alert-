@@ -6,12 +6,12 @@
 #include <algorithm>
 #include <limits>
 #include <cmath>
-
+//=======================================================================
 Inventory::Inventory()
 {
 	newProductID = 1;
 }
-
+//=======================================================================
 //menu
 int Inventory::getMenuOption(int min, int max) const
 {
@@ -47,8 +47,8 @@ int Inventory::getMenuOption(int min, int max) const
 		}
 	}
 }
-
-//date validation function
+//=======================================================================
+//date validation
 bool isValidDate(const std::string& date)
 {
 	if(date.empty())
@@ -104,8 +104,8 @@ bool isValidDate(const std::string& date)
 
 	return true;
 }
-
-//barcode validation function
+//=======================================================================
+//barcode validation
 bool isValidBarcode(const std::string& barcode)
 {
 	if(barcode.length() != 9)
@@ -123,20 +123,20 @@ bool isValidBarcode(const std::string& barcode)
 
 	return true;
 }
-
-//quantity validation function
+//=======================================================================
+//quantity validation
 bool isValidQuantity(int quantity)
 {
 	return quantity >= 0;
 }
-
-//price validation function
+//=======================================================================
+//price validation
 bool isValidPrice(double price)
 {
 	return price >= 0;
 }
-
-//supplier validation function
+//=======================================================================
+//supplier validation
 bool isValidSupplier(const std::string& supplier)
 {
 	if(supplier.empty())
@@ -153,7 +153,7 @@ bool isValidSupplier(const std::string& supplier)
 	}
 	return true;
 }
-
+//=======================================================================
 //check for the existance of barcode
 bool Inventory::isBarcodeExist(const std::string& barcode) const
 {
@@ -166,7 +166,7 @@ bool Inventory::isBarcodeExist(const std::string& barcode) const
 	}
 	return false;
 }
-
+//=======================================================================
 std::string trim(const std::string& str)
 {
 	size_t start = str.find_first_not_of(" \t\r\n");
@@ -179,33 +179,52 @@ std::string trim(const std::string& str)
 
 	return str.substr(start, end - start + 1);
 }
-
-//change case function
+//=======================================================================
+//change case
 std::string toLowerCase(const std::string& str)
 {
 	std::string lowerStr = str;
-	[](unsigned char c)
+
+	std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), [](unsigned char c)
 		{
-			return static_cast<char>(std::tolower(c));
-		});
+			return std::tolower(c);
+		}
+	);
 
 	return lowerStr;
 }
-
-//function for checking if there is product
+//=======================================================================
+//checking if there is product
 bool Inventory::hasProducts() const
 {
 	return !products.empty();
 }
-
-//function for adding product
-void Inventory::addProduct(const Product& product)
+//=======================================================================
+//Exit Program
+void Inventory::exitProgram() const
 {
-	products.push_back(product); //to add the product to the vector 
-	//(products(empty)) become (products(1)) after adding the product
-}
+	char confirm;
 
-//diaplay function
+	std::cout << "Are you sure you want to exit the program? (Y/N): ";
+	std::cin >> confirm;
+
+	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+	confirm = std::tolower(static_cast<unsigned char>(confirm));				if (confirm == 'y')
+
+		if (confirm == 'y')
+		{
+			std::cout << "You are exiting the program. Thank you for using the Inventory Management System!" << std::endl;
+			std::cout << "Goodbye! Wish you have a happy day!" << std::endl;
+			exit(0);
+		}
+}
+//=======================================================================
+//=======================================================================
+//Functions in Main Menu
+//=======================================================================
+//=======================================================================
+//Display function
 void Inventory::displayProducts() const
 {
 	if(!hasProducts())
@@ -218,10 +237,14 @@ void Inventory::displayProducts() const
 		product.display();
 	}
 }
-
-//Functions in Main Menu
-
-//add product function
+//=======================================================================
+//ADD function
+void Inventory::addProduct(const Product& product)
+{
+	products.push_back(product); //to add the product to the vector 
+	//(products(empty)) become (products(1)) after adding the product
+}
+//
 void Inventory::addProduct()
 {
 	int quantity;
@@ -406,19 +429,63 @@ void Inventory::addProduct()
 	std::cout << "=======================================================================\n";
 	std::cout << "Product is added successfully!\n";
 }
-
-//search product function
+//=======================================================================
+//Main Search function
 void Inventory::searchProduct() const
 {
 	clearScreen();
-	if(!hasProducts())
+	if (!hasProducts())
 	{
 		pauseScreen("Please Enter to return...");
 		clearScreen();
 		return;
 	}
 
-	int option;
+	displaySearchMenu();
+
+	int option = getMenuOption(1, 8);
+
+	switch (option)
+	{
+	case 1:
+		searchByID();
+		break;
+
+	case 2:
+		searchByBarcode();
+		break;
+
+	case 3:
+		searchByName();
+		break;
+
+	case 4:
+		searchByCategory();
+		break;
+
+	case 5:
+		searchByPriceRange();
+		break;
+
+	case 6:
+		searchBySupplier();
+		break;
+
+	case 7:
+		return;
+
+	case 8:
+		exitProgram();
+		break;
+
+	}
+
+	pauseScreen("Press Enter to return...");
+	clearScreen();
+}
+//Search Menu
+void Inventory::displaySearchMenu() const
+{
 	std::cout << "=======================================================================\n";
 	std::cout << "Search Product Menu:\n";
 	std::cout << "=======================================================================\n";
@@ -432,307 +499,278 @@ void Inventory::searchProduct() const
 	std::cout << "8. Exit" << std::endl;
 	std::cout << "=======================================================================\n";
 	std::cout << "Please select an option: ";
-
-	option = getMenuOption(1, 8);
-	if(option == 7)
-	{
-		std::cout << "You are now returning to main menu..." << std::endl;
-		return;
-	}
-
-	if(option == 8)
-	{
-		char confirm;
-		std::cout << "Are you sure you want to exit the program? (Y/N): ";
-		std::cin >> confirm;
-		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		confirm = std::tolower(static_cast<unsigned char>(confirm));
-		if(confirm == 'y')
-		{
-			std::cout << "You are exiting the program. Thank you for using the Inventory Management System!" << std::endl;
-			std::cout << "Goodbye! Wish you have a happy day!" << std::endl;
-			exit(0);
-		}
-		else
-		{
-			std::cout << "Exit cancelled. Returning to Search Menu..." << std::endl;
-			return;
-		}
-	}
-
+}
+// Search Case function
+//ID
+void Inventory::searchByID() const
+{
+	int id;
 	bool found = false;
-
-	switch(option)
+	
+	while (true)
 	{
-		// id
-		case 1:
+		while (true)
 		{
-			int id;
-
-			//input validation
-			while(true)
+			std::cout << "Please enter Product ID to search: ";
+			if (std::cin >> id && id > 0)
 			{
-				std::cout << "Please enter Product ID to search: ";
-
-				if(std::cin >> id && id > 0)
-				{
-					std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-					break;
-				}
-
-				std::cout << "The Product ID is invalid. Please re-enter a positive integer." << std::endl;
-				std::cin.clear();
 				std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				break;
 			}
 
-			//start to search
-			for(const auto& product : products)
-			{
-				if(product.getID() == id)
-				{
-					product.display();
-					found = true;
-					break;
-				}
-			}
-
-			if(!found)
-			{
-				std::cout << "Sorry! The product with ID " << id << " is not found. Please try again!" << std::endl;
-			}
-			break;
+			std::cout << "The Product ID is invalid. Please re-enter a positive integer." << std::endl;
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
 
-		// barcode
-		case 2:
+		for (const auto& product : products)
 		{
-			std::string barcode;
-
-			while(true)
-			{
-				std::cout << "Please enter Product Barcode to search: ";
-				std::getline(std::cin, barcode);
-				barcode = trim(barcode);
-
-				if(isValidBarcode(barcode))
-				{
-					break;
-				}
-
-				std::cout << "The Product Barcode is invalid. Please re-enter a valid barcode." << std::endl;
-			}
-
-			for (const auto& product : products)
-			{
-				if (product.getBarcode() == barcode)
+			if (product.getID() == id)
 			{
 				product.display();
 				found = true;
 				break;
 			}
-			}
-
-			if (!found)
-			{
-				std::cout << "Sorry! The product with Barcode " << barcode << " is not found. Please try again!" << std::endl;
-			}
-			
-			break;
 		}
 
-		// name
-		case 3:
+		if (!found)
 		{
-			std::string name;
-
-			while(true)
-			{
-				std::cout << "Please enter Product Name to search: ";
-				std::getline(std::cin, name);
-				name = trim(name);
-
-				if(!name.empty() && name.find_first_not_of(' ') != std::string::npos)
-					break;
-
-				std::cout << "The Product Name cannot be empty. Please enter a product name." << std::endl;
-			}
-
-			std::string keyword = toLowerCase(name);
-
-			for(const auto& product : products)
-			{
-				if(toLowerCase(product.getName()).find(keyword)
-					!= std::string::npos)
-				{
-					product.display();
-					found = true;
-				}
-			}
-
-			if(!found)
-			{
-				std::cout << "Sorry! The product with Name " << name << " is not found. Please try again!" << std::endl;
-			}
-			
-			break;
+			std::cout << "Sorry! The product with ID " << id << " is not found. Please try again!" << std::endl;
 		}
+		break;
+	}
+}
+//Barcode
+void Inventory::searchByBarcode() const
+{
+	while (true)
+	{
+		std::string barcode;
+		bool found = false;
 
-		// category
-		case 4:
+		while (true)
 		{
-			std::string category;
+			std::cout << "Please enter Product Barcode to search: ";
+			std::getline(std::cin, barcode);
+			barcode = trim(barcode);
 
-			while(true)
+			if (isValidBarcode(barcode))
 			{
-				std::cout << "Please enter Product Category to search: ";
-				std::getline(std::cin, category);
-				category = trim(category);
-
-				if(!category.empty() && category.find_first_not_of(' ') != std::string::npos)
-					break;
-
-				std::cout << "The Product Category cannot be empty. Please enter a category." << std::endl;
-			}
-		
-			std::string keyword = toLowerCase(category);
-
-			for(const auto& product : products)
-			{
-				if(toLowerCase(product.getCategory()).find(keyword)
-					!= std::string::npos)
-				{
-					product.display();
-					found = true;
-				}
-			}
-
-			if(!found)
-			{
-				std::cout << "Sorry! The product with Category " << category << " is not found. Please try again!" << std::endl;
-			}
-			
-			break;
-		}
-
-		// price range
-		case 5:
-		{
-			double minPrice, maxPrice;
-
-			while(true)
-			{
-				//min price validation
-				while(true)
-				{
-					std::cout << "Please enter the Minimum Price: RM ";
-
-					if (std::cin >> minPrice && isValidPrice(minPrice))
-				{
-					std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-					break;
-				}
-
-					std::cout << "The Price input is invalid. Please re-enter a non-negative number." << std::endl;
-					std::cin.clear();
-					std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-				}
-
-				//max price validation
-				while(true)
-				{
-					std::cout << "Please enter the Maximum Price: RM ";
-
-					if (std::cin >> maxPrice && isValidPrice(maxPrice))
-					{
-						std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-						break;
-					}
-
-					std::cout << "The Price input is invalid. Please re-enter a non-negative number." << std::endl;
-					std::cin.clear();
-					std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-				}
-
-				if(minPrice <= maxPrice)
-				{
-					break;
-				}
-				std::cout << "The Minimum Price cannot be greater than the Maximum Price. Please try again!" << std::endl;
-			}
-
-			for(const auto& product : products)
-			{
-				if(product.getPrice() >= minPrice && product.getPrice() <= maxPrice)
-				{
-					product.display();
-					found = true;
-				}
-			}
-
-			if(!found)
-			{
-				std::cout << "Sorry! No products found in the price range RM " << minPrice << " - RM " << maxPrice << ". Please try again!" << std::endl;
-			}
-			
-			break;
-		}
-
-		// supplier
-		case 6:
-		{
-			std::string supplier;
-
-			while (true)
-			{
-				std::cout << "Please enter Product Supplier to search: ";
-				std::getline(std::cin, supplier);
-				supplier = trim(supplier);
-
-				if (!isValidSupplier(supplier))
-				{
-					std::cout << "The Product Supplier cannot be empty. Please enter a Product Supplier." << std::endl;
-					continue;
-				}
-
 				break;
 			}
 
-			std::string keyword = toLowerCase(supplier);
-
-			for(const auto& product : products)
-			{
-				if(toLowerCase(product.getSupplier()).find(keyword)
-					!= std::string::npos)
-				{
-					product.display();
-					found = true;
-				}
-			}
-
-			if(!found)
-			{
-				std::cout << "Sorry! The product with Supplier " << supplier << " is not found. Please try again!" << std::endl;
-			}
-			
-			break;
+			std::cout << "The Product Barcode is invalid. Please re-enter a valid barcode." << std::endl;
 		}
 
-		default:
+		for (const auto& product : products)
 		{
-			std::cout << "This is an invalid option. Please try again!" << std::endl;
+			if (product.getBarcode() == barcode)
+			{
+				product.display();
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			std::cout << "Sorry! The product with Barcode " << barcode << " is not found. Please try again!" << std::endl;
+		}
+
+		break;
+	}
+}
+//Name
+void Inventory::searchByName() const
+{
+	while (true)
+	{
+		std::string name;
+		bool found = false;
+
+		while (true)
+		{
+			std::cout << "Please enter Product Name to search: ";
+			std::getline(std::cin, name);
+			name = trim(name);
+
+			if (!name.empty() && name.find_first_not_of(' ') != std::string::npos)
+				break;
+
+			std::cout << "The Product Name cannot be empty. Please enter a product name." << std::endl;
+		}
+
+		std::string keyword = toLowerCase(name);
+
+		for (const auto& product : products)
+		{
+			if (toLowerCase(product.getName()).find(keyword)
+				!= std::string::npos)
+			{
+				product.display();
+				found = true;
+			}
+		}
+
+		if (!found)
+		{
+			std::cout << "Sorry! The product with Name " << name << " is not found. Please try again!" << std::endl;
+		}
+
+		break;
+	}
+}
+//Category
+void Inventory::searchByCategory() const
+{
+	while (true)
+	{
+		std::string category;
+		bool found = false;
+
+		while (true)
+		{
+			std::cout << "Please enter Product Category to search: ";
+			std::getline(std::cin, category);
+			category = trim(category);
+
+			if (!category.empty() && category.find_first_not_of(' ') != std::string::npos)
+				break;
+
+			std::cout << "The Product Category cannot be empty. Please enter a category." << std::endl;
+		}
+
+		std::string keyword = toLowerCase(category);
+
+		for (const auto& product : products)
+		{
+			if (toLowerCase(product.getCategory()).find(keyword)
+				!= std::string::npos)
+			{
+				product.display();
+				found = true;
+			}
+		}
+
+		if (!found)
+		{
+			std::cout << "Sorry! The product with Category " << category << " is not found. Please try again!" << std::endl;
+		}
+
+		break;
+	}
+}
+//Price Range
+void Inventory::searchByPriceRange() const
+{
+	while (true)
+	{
+		double minPrice, maxPrice;
+		bool found = false;
+
+		while (true)
+		{
+			//min price validation
+			while (true)
+			{
+				std::cout << "Please enter the Minimum Price: RM ";
+
+				if (std::cin >> minPrice && isValidPrice(minPrice))
+				{
+					std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+					break;
+				}
+
+				std::cout << "The Price input is invalid. Please re-enter a non-negative number." << std::endl;
+				std::cin.clear();
+				std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			}
+
+			//max price validation
+			while (true)
+			{
+				std::cout << "Please enter the Maximum Price: RM ";
+
+				if (std::cin >> maxPrice && isValidPrice(maxPrice))
+				{
+					std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+					break;
+				}
+
+				std::cout << "The Price input is invalid. Please re-enter a non-negative number." << std::endl;
+				std::cin.clear();
+				std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			}
+
+			if (minPrice <= maxPrice)
+			{
+				break;
+			}
+			std::cout << "The Minimum Price cannot be greater than the Maximum Price. Please try again!" << std::endl;
+		}
+
+		for (const auto& product : products)
+		{
+			if (product.getPrice() >= minPrice && product.getPrice() <= maxPrice)
+			{
+				product.display();
+				found = true;
+			}
+		}
+
+		if (!found)
+		{
+			std::cout << "Sorry! No products found in the price range RM " << minPrice << " - RM " << maxPrice << ". Please try again!" << std::endl;
+		}
+
+		break;
+	}
+}
+//Supplier
+void Inventory::searchBySupplier() const
+{
+	while (true)
+	{
+		std::string supplier;
+		bool found = false;
+
+		while (true)
+		{
+			std::cout << "Please enter Product Supplier to search: ";
+			std::getline(std::cin, supplier);
+			supplier = trim(supplier);
+
+			if (!isValidSupplier(supplier))
+			{
+				std::cout << "The Product Supplier cannot be empty. Please enter a Product Supplier." << std::endl;
+				continue;
+			}
+
 			break;
 		}
-	}
 
-	if(found)
-	{
-		std::cout << "\nSearch completed successfully.\n";
+		std::string keyword = toLowerCase(supplier);
+
+		for (const auto& product : products)
+		{
+			if (toLowerCase(product.getSupplier()).find(keyword)
+				!= std::string::npos)
+			{
+				product.display();
+				found = true;
+			}
+		}
+
+		if (!found)
+		{
+			std::cout << "Sorry! The product with Supplier " << supplier << " is not found. Please try again!" << std::endl;
+		}
+
+		break;
 	}
-	pauseScreen("Press Enter to return...");
-	clearScreen();
 }
-
-//sort product function
+//=======================================================================
+//Sort function
 void Inventory::sortProducts()
 {
 	clearScreen();
@@ -906,8 +944,8 @@ void Inventory::sortProducts()
 	clearScreen();
 	return;
 }
-
-//update product function
+//=======================================================================
+//Update function
 void Inventory::updateProduct()
 {
 	clearScreen();
@@ -1321,8 +1359,8 @@ void Inventory::updateProduct()
 	pauseScreen("Press Enter to return...");
 	clearScreen();
 }
-
-//delete product function
+//=======================================================================
+//Delete function
 void Inventory::deleteProduct()
 {
 	clearScreen();
@@ -1364,7 +1402,7 @@ void Inventory::deleteProduct()
 
 			char confirm;
 
-			std::cout << "\nAre you sure to delete this product? (y/n): ";
+			std::cout << "\nAre you sure to delete this product? (Y/N): ";
 			std::cin >> confirm;
 
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -1394,8 +1432,8 @@ void Inventory::deleteProduct()
 	pauseScreen("Press Enter to return...");
 	clearScreen();
 }
-
-//check product status function
+//=======================================================================
+//Status Checking function
 void Inventory::checkProductStatus()
 {
 	clearScreen();
