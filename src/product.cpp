@@ -63,6 +63,11 @@ std::string Product::getExpiryDate() const
 	return product_ExpiryDate;
 }
 
+std::string Product::getManufactureDate() const
+{
+    return product_ManufactureDate;
+}
+
 double Product::getPrice() const
 {
 	return product_Price;
@@ -78,12 +83,57 @@ int Product::getQuantity() const
 	return product_Quantity;
 }
 
-double Product::getInventoryValue() const
+std::string Product::getDescription() const
 {
-	return product_Quantity * product_Price;
+    return product_Description;
 }
 
 double Product::getInventoryValue() const
 {
 	return product_Quantity * product_Price;
+}
+
+void Product::setBarcode(std::string newBarcode)
+{
+    product_Barcode = newBarcode;
+}
+
+void Product::setName(std::string newName)
+{
+    product_Name = newName;
+}
+
+void Product::setDescription(std::string newDescription)
+{
+    product_Description = newDescription;
+}
+
+void Product::setCategory(std::string newCategory) 
+{
+    product_Category = newCategory;
+}
+
+void Product::setQuantity(int newQuantity)
+{
+    product_Quantity = newQuantity;
+}
+
+void Product::setPrice(double newPrice)
+{
+    product_Price = newPrice;
+}
+
+void Product::setSupplier(std::string newSupplier)
+{
+    product_Supplier = newSupplier;
+}
+
+void Product::setExpiryDate(std::string newExpiry)
+{
+    product_ExpiryDate = newExpiry;
+}
+
+void Product::setManufactureDate(std::string newManufacture)
+{
+    product_ExpiryDate = newManufacture;
 }
