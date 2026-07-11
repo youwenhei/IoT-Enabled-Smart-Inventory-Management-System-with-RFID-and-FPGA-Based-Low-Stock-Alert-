@@ -70,10 +70,7 @@ int main()
 			break;
 
 		case 6: //delete product
-			clearScreen();
-
-			pauseScreen("Press Enter to return...");
-			clearScreen();
+			inventory.deleteProduct();
 			break;
 
 		case 7: //check product status
