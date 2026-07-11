@@ -1,40 +1,9 @@
 #include "Inventory.h"
-#include "Product.h"
+#include "Utility.h"
 #include <iostream>
 #include <windows.h>
-#include <cstdlib>
-#include <limits>
 
 using namespace std;
-
-void clearScreen()
-{
-	system("cls");
-}
-
-void pauseScreen(const std::string& message = "Press Enter to continue...")
-{
-	cout << "\n" << message;
-	cin.get();
-}
-
-int Inventory::getMenuOption(int min, int max)
-{
-	int option;
-
-	while (true)
-	{
-		if (cin >> ignore && option >= min && option <= max)
-		{
-			cin.ignore(numeric_limits<streamsize>::max(), '\n');
-			return option;
-		}
-
-		cout << "The input is invalid. Please try again." << std::endl;
-		cin.clear();
-		cin.ignore(numeric_limits<streamsize>::max(), '\n');
-	}
-}
 
 void displayMenu()
 {
@@ -70,73 +39,60 @@ int main()
 	{
 		clearScreen();
 		displayMenu();
-		int option;
+		int option = getMenuOption(1, 8);
 
-		while (true)
+		switch (option)
 		{
+		case 1: // add product
 			clearScreen();
-			displayMenu();
-			option = getMenuOption(1, 8);
+			inventory.addProduct();
+			pauseScreen("Press Enter to return...");
+			clearScreen();
+			break;
 
-			switch (option)
-			{
-			case 1: // add product
-				clearScreen();
-				inventory.addProduct();
-				pauseScreen();
-				clearScreen();
-				break;
+		case 2: //display products
+			clearScreen();
+			inventory.displayProducts();
+			pauseScreen("Press Enter to return...");
+			break;
 
-			case 2: //display products
-				clearScreen();
-				inventory.displayProducts();
-				break;
+		case 3: //search product
+			clearScreen();
+			inventory.searchProduct();
+			break;
 
-			case 3: //search product
-				clearScreen();
-				inventory.searchProduct();
-				break;
+		case 4: //sort product
+			inventory.sortProducts();
+			break;
 
-			case 4: //sort product
-				inventory.sortProducts();
-				break;
+		case 5: //update product
+			clearScreen();
 
-			case 5: //update product
-				clearScreen();
+			pauseScreen("Press Enter to return...");
+			clearScreen();
+			break;
 
-				pauseScreen();
-				clearScreen();
-				break;
+		case 6: //delete product
+			clearScreen();
 
-			case 6: //delete product
-				clearScreen();
+			pauseScreen("Press Enter to return...");
+			clearScreen();
+			break;
 
-				pauseScreen();
-				clearScreen();
-				break;
+		case 7: //check product status
+			clearScreen();
 
-			case 7: //check product status
-				clearScreen();
+			pauseScreen("Press Enter to return...");
+			clearScreen();
+			break;
 
-				pauseScreen();
-				clearScreen();
-				break;
-
-			case 8:
-				cout << "Exiting the program....." << endl;
-				cout << "Thank You for Using YouExpress Inventory Management System!" << endl;
-				cout << "Goodbye! Wish You Have A Nice Day!" << endl;
-				return 0;
-
-			default:
-				cout << "It is not a valid option." << endl;
-				cout << "Please try again" << endl;
-				break;
-			}
+		case 8:
+			cout << "Exiting the program....." << endl;
+			cout << "Thank You for Using YouExpress Inventory Management System!" << endl;
+			cout << "Goodbye! Wish You Have A Nice Day!" << endl;
+			return 0;
 		}
 	}
-
-	return 0;
 }
 		}
 	}
