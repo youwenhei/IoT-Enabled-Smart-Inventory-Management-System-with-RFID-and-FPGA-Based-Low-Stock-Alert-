@@ -31,7 +31,8 @@ public:
 	void sortByExpiryDate() const;
 
 	void updateProduct();
-	void updateBarcode();
+
+	void deleteProduct();
 
 	bool isBarcodeExist(const std::string& barcode) const;
 	bool hasProducts() const;
