@@ -13,24 +13,25 @@ private:
 public:
 	Inventory();
 
-	bool isBarcodeExist(const std::string& barcode) const;
 	bool hasProducts() const;
 	int getMenuOption(int min, int max) const;
+	void displayProducts() const;
+	bool isBarcodeExist(const std::string& barcode) const;
+
+	void exitProgram() const;
+	void returnProgram() const;
 
 	void addProduct(); //function overloading
 	void addProduct(const Product& product);
 
-	void displayProducts() const;
-
-	void searchProduct() const;
 	void displaySearchMenu() const;
-	void exitProgram() const;
-	void searchByID() const;
-	void searchByBarcode() const;
-	void searchByName() const;
-	void searchByCategory() const;
-	void searchBySupplier() const;
-	void searchByPriceRange() const;
+	void searchProduct() const;
+	bool searchByID() const;
+	bool searchByBarcode() const;
+	bool searchByName() const;
+	bool searchByCategory() const;
+	bool searchBySupplier() const;
+	bool searchByPriceRange() const;
 
 	void sortProducts();
 	void sortByPriceAscending() const;
@@ -38,6 +39,10 @@ public:
 	void sortByExpiryDate() const;
 
 	void updateProduct();
+	std::string inputString(const std::string& prompt);
+	int inputPositive(const std::string& prompt);
+	double inputPrice(const std::string& prompt);
+	std::string inputDate(const std::string& prompt);
 
 	void deleteProduct();
 
