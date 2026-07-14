@@ -7,9 +7,7 @@ using namespace std;
 
 void displayMenu()
 {
-	cout << "====================================================" << endl;
-	cout << "Inventory Management System Menu" << endl;
-	cout << "====================================================" << endl;
+	displayTitle("Inventory Management System Menu");
 	cout << "\n";
 	cout << "Welcome to YouExpress Inventory Management System!" << endl;
 	cout << "Manage your products efficiently and effectively." << endl;
@@ -24,8 +22,7 @@ void displayMenu()
 	cout << "6. Delete Product" << endl;
 	cout << "7. Check Product Status" << endl;
 	cout << "8. Exit" << endl;
-	cout << "====================================================" << endl;
-	cout << "\n";
+	std::cout << "=======================================================================\n";
 	cout << "Please select an option: ";
 }
 
