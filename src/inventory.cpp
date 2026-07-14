@@ -8,49 +8,19 @@
 #include <cmath>
 #include <string>
 #include <stdexcept>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 //=======================================================================
 Inventory::Inventory()
 {
 	newProductID = 1;
+	loadProducts();
+
+	//std::cout << "Loaded products: " << products.size() << std::endl;
 }
 //=======================================================================
-//menu
-int Inventory::getMenuOption(int min, int max) const
-{
-	int option;
-
-	while (true)
-	{
-		std::string input;
-		std::getline(std::cin, input);
-
-		try
-		{
-			size_t pos;
-			option = std::stoi(input, &pos);
-
-			if (pos != input.length())
-			{
-				throw std::invalid_argument("Invalid");
-			}
-
-			if (option >= min && option <= max)
-			{
-				return option;
-			}
-
-			std::cout << "The input is invalid. Please enter a number between "
-				<< min << " and " << max << "." << std::endl;
-		}
-
-		catch (const std::exception&)
-		{
-			std::cout << "The input is invalid. Please enter a valid number." << std::endl;
-		}
-	}
-}
-//=======================================================================
-//date validation
+//Date validation
 bool isValidDate(const std::string& date)
 {
 	if (date.empty())
@@ -106,7 +76,7 @@ bool isValidDate(const std::string& date)
 	return true;
 }
 //=======================================================================
-//barcode validation
+//Barcode validation
 bool isValidBarcode(const std::string& barcode)
 {
 	if (barcode.length() != 9)
@@ -124,7 +94,7 @@ bool isValidBarcode(const std::string& barcode)
 	return true;
 }
 //=======================================================================
-//name validation
+//Name validation
 bool isValidName(const std::string& name)
 {
 	if (name.empty())
@@ -132,27 +102,27 @@ bool isValidName(const std::string& name)
 		return false;
 	}
 
-	for (char c : name)
+for (char c : name)
+{
+	if (!std::isalnum(static_cast<unsigned char>(c))
+		&& c != ' '
+		&& c != '&'
+		&& c != '-'
+		&& c != '\''
+		&& c != '.'
+		&& c != '/'
+		&& c != '+'
+		&& c != '('
+		&& c != ')'
+		&& c != ',')
 	{
-		if (!std::isalnum(static_cast<unsigned char>(c))
-			&& c != ' '
-			&& c != '&'
-			&& c != '-'
-			&& c != '\''
-			&& c != '.'
-			&& c != '/'
-			&& c != '+'
-			&& c != '('
-			&& c != ')'
-			&& c != ',')
-		{
-			return false;
-		}
+		return false;
 	}
-	return true;
+}
+return true;
 }
 //=======================================================================
-//name validation
+//Category validation
 bool isValidCategory(const std::string& category)
 {
 	if (category.empty())
@@ -170,19 +140,19 @@ bool isValidCategory(const std::string& category)
 	return true;
 }
 //=======================================================================
-//quantity validation
+//Quantity validation
 bool isValidQuantity(int quantity)
 {
 	return quantity >= 0;
 }
 //=======================================================================
-//price validation
+//Price validation
 bool isValidPrice(double price)
 {
 	return std::isfinite(price) && price >= 0;
 }
 //=======================================================================
-//supplier validation
+//Supplier validation
 bool isValidSupplier(const std::string& supplier)
 {
 	if (supplier.empty())
@@ -210,7 +180,60 @@ bool isValidSupplier(const std::string& supplier)
 	return true;
 }
 //=======================================================================
-//check for the existance of barcode
+//RFID validation
+bool isValidRFID(const std::string& rfid)
+{
+	if (rfid.length() != 8)
+		return false;
+
+	for (char c : rfid)
+	{
+		if (!std::isxdigit(static_cast<unsigned char>(c)))
+			return false;
+	}
+
+	return true;
+}
+//=======================================================================
+//RFID uniqueness
+bool Inventory::isRFIDExist(const std::string& rfid) const
+{
+	std::string inputRFID = rfid;
+
+	std::transform(
+		inputRFID.begin(),
+		inputRFID.end(),
+		inputRFID.begin(),
+		[](unsigned char c)
+		{
+			return std::toupper(c);
+		}
+	);
+
+	for (const auto& product : products)
+	{
+		std::string existingRFID = product.getRFID();
+
+		std::transform(
+			existingRFID.begin(),
+			existingRFID.end(),
+			existingRFID.begin(),
+			[](unsigned char c)
+			{
+				return std::toupper(c);
+			}
+		);
+
+		if (existingRFID == inputRFID)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+//=======================================================================
+//Check for the existence of barcode
 bool Inventory::isBarcodeExist(const std::string& barcode) const
 {
 	for (const auto& product : products)
@@ -235,7 +258,7 @@ std::string trim(const std::string& str)
 	return str.substr(start, end - start + 1);
 }
 //=======================================================================
-//change case
+//Change case
 std::string toLowerCase(const std::string& str)
 {
 	std::string lowerStr = str;
@@ -248,14 +271,23 @@ std::string toLowerCase(const std::string& str)
 	return lowerStr;
 }
 //=======================================================================
-//checking if there is product
+//Check if there is product
 bool Inventory::hasProducts() const
 {
 	return !products.empty();
 }
 //=======================================================================
-//Exit Program
-void Inventory::exitProgram() const
+//Display product function
+void Inventory::displayProducts() const
+{
+	for (const auto& product : products)
+	{
+		product.display();
+	}
+}
+//=======================================================================
+//Exit program
+void exitProgram()
 {
 	char confirm;
 
@@ -282,25 +314,122 @@ void Inventory::exitProgram() const
 		std::exit(0);
 	}
 }
-//Return Program
-void Inventory::returnProgram() const
+//=======================================================================
+//Return program
+void returnProgram()
 {
 	std::cout << "You are now returning to main menu..." << std::endl;
 	return;
 }
 //=======================================================================
+//Save program
+void Inventory::saveProducts() const
+{
+	std::ofstream file("products.txt");
+	
+	if (!file.is_open())
+	{
+		std::cout << "The file is unable to open." << std::endl;
+		return;
+	}
+	
+	for (const auto& product : products)
+	{
+		file << product.getID() << "|"
+			<< product.getBarcode() << "|"
+			<< product.getRFID() << "|"
+			<< product.getName() << "|"
+			<< product.getDescription() << "|"
+			<< product.getCategory() << "|"
+			<< product.getQuantity() << "|"
+			<< std::fixed << std::setprecision(2)
+			<<product.getPrice() << "|"
+			<< product.getSupplier() << "|"
+			<< product.getExpiryDate() << "|"
+			<< product.getManufactureDate() << "|"
+			<< "\n";
+	}
+
+	file.close();
+}
+//=======================================================================
+//Load program
+void Inventory::loadProducts()
+{
+	std::ifstream file("products.txt");
+
+	if (!file)
+	{
+		return;
+	}
+
+	std::string line;
+	
+	int maxID = 0;
+
+	while (std::getline(file, line))
+	{
+		std::stringstream ss(line);
+
+		std::string id;
+		std::string barcode;
+		std::string rfid;
+		std::string name;
+		std::string description;
+		std::string category;
+		std::string quantity;
+		std::string price;
+		std::string supplier;
+		std::string expiryDate;
+		std::string manufactureDate;
+
+		std::getline(ss, id, '|');
+		std::getline(ss, barcode, '|');
+		std::getline(ss, rfid, '|');
+		std::getline(ss, name, '|');
+		std::getline(ss, description, '|');
+		std::getline(ss, category, '|');
+		std::getline(ss, quantity, '|');
+		std::getline(ss, price, '|');
+		std::getline(ss, supplier, '|');
+		std::getline(ss, expiryDate, '|');
+		std::getline(ss, manufactureDate, '|');
+
+		if (id.empty() || barcode.empty())
+		{
+			continue;
+		}
+
+		Product product(
+			std::stoi(id),
+			barcode,
+			name,
+			description,
+			category,
+			std::stoi(quantity),
+			std::stod(price),
+			supplier,
+			expiryDate,
+			manufactureDate
+		);
+
+		product.setRFID(rfid);
+		products.push_back(product);
+
+		if (std::stoi(id) > maxID)
+		{
+			maxID = std::stoi(id);
+		}
+	}
+
+	newProductID = maxID + 1;
+
+	file.close();
+}
+//=======================================================================
 //=======================================================================
 //Functions in Main Menu
 //=======================================================================
-//=======================================================================
-//Display function
-void Inventory::displayProducts() const
-{
-	for (const auto& product : products)
-	{
-		product.display();
-	}
-}
 //=======================================================================
 //Main Add function
 void Inventory::addProduct()
@@ -309,9 +438,7 @@ void Inventory::addProduct()
 	double price;
 	std::string barcode, name, description, category, supplier, expiryDate, manufactureDate;
 
-	std::cout << "=======================================================================\n";
-	std::cout << "Add Product Menu\n";
-	std::cout << "=======================================================================\n";
+	displayTitle("Add Product Menu");
 
 
 	//barcode validation
@@ -457,7 +584,7 @@ void Inventory::addProduct()
 
 		if (!isValidDate(manufactureDate))
 		{
-			std::cout << "The Product Manufacture Date format is invalid. Please re-enter the Product Manufacture Ddate in YYYY-MM-DD format." << std::endl;
+			std::cout << "The Product Manufacture Date format is invalid. Please re-enter the Product Manufacture Date in YYYY-MM-DD format." << std::endl;
 			std::cout << "Thank you for your understanding." << std::endl;
 			continue;
 		}
@@ -488,6 +615,7 @@ void Inventory::addProduct()
 
 	addProduct(newProduct);
 	newProductID++;
+	saveProducts();
 
 	std::cout << "=======================================================================\n";
 	std::cout << "Congratulations! The product is added successfully!\n";
@@ -521,26 +649,32 @@ void Inventory::searchProduct() const
 		switch (option)
 		{
 		case 1:
+			clearScreen();
 			found = searchByID();
 			break;
 
 		case 2:
+			clearScreen();
 			found = searchByBarcode();
 			break;
 
 		case 3:
+			clearScreen();
 			found = searchByName();
 			break;
 
 		case 4:
+			clearScreen();
 			found = searchByCategory();
 			break;
 
 		case 5:
+			clearScreen();
 			found = searchByPriceRange();
 			break;
 
 		case 6:
+			clearScreen();
 			found = searchBySupplier();
 			break;
 
@@ -559,9 +693,7 @@ void Inventory::searchProduct() const
 //Search Menu
 void Inventory::displaySearchMenu() const
 {
-	std::cout << "=======================================================================\n";
-	std::cout << "Search Product Menu:\n";
-	std::cout << "=======================================================================\n";
+	displayTitle("Search Product Menu");
 	std::cout << "1. Search by ID" << std::endl;
 	std::cout << "2. Search by Barcode" << std::endl;
 	std::cout << "3. Search by Name" << std::endl;
@@ -577,6 +709,7 @@ void Inventory::displaySearchMenu() const
 //ID
 bool Inventory::searchByID() const
 {
+	displayTitle("Search Product By ID");
 	int id;
 	bool found = false;
 
@@ -613,6 +746,7 @@ bool Inventory::searchByID() const
 //Barcode
 bool Inventory::searchByBarcode() const
 {
+		displayTitle("Search Product By Barcode");
 		std::string barcode;
 		bool found = false;
 
@@ -650,6 +784,7 @@ bool Inventory::searchByBarcode() const
 //Name
 bool Inventory::searchByName() const
 {
+		displayTitle("Search Product By Name");
 		std::string name;
 		bool found = false;
 
@@ -687,6 +822,7 @@ bool Inventory::searchByName() const
 //Category
 bool Inventory::searchByCategory() const
 {
+		displayTitle("Search Product By Category");
 		std::string category;
 		bool found = false;
 
@@ -724,6 +860,7 @@ bool Inventory::searchByCategory() const
 //Price Range
 bool Inventory::searchByPriceRange() const
 {
+		displayTitle("Search Product By Price Range");
 		double minPrice, maxPrice;
 		bool found = false;
 
@@ -787,6 +924,7 @@ bool Inventory::searchByPriceRange() const
 //Supplier
 bool Inventory::searchBySupplier() const
 {
+	displayTitle("Search Product By Supplier");
 		std::string supplier;
 		bool found = false;
 
@@ -798,7 +936,7 @@ bool Inventory::searchBySupplier() const
 
 			if (!isValidSupplier(supplier))
 			{
-				std::cout << "The Product Supplier cannot be empty. Please enter a Product Supplier." << std::endl;
+				std::cout << "The Product Supplier is invalid. Please enter a Product Supplier." << std::endl;
 				continue;
 			}
 
@@ -837,9 +975,7 @@ void Inventory::sortProducts()
 	}
 
 	int option;
-	std::cout << "=======================================================================\n";
-	std::cout << "Sort Products Menu\n";
-	std::cout << "=======================================================================\n";
+	displayTitle("Sort Products Menu");
 	std::cout << "1. Sort by ID" << std::endl;
 	std::cout << "2. Sort by Name" << std::endl;
 	std::cout << "3. Sort by Category" << std::endl;
@@ -994,9 +1130,7 @@ void Inventory::updateProduct()
 	}
 
 	int option;
-	std::cout << "=======================================================================\n";
-	std::cout << "Update Products Menu\n";
-	std::cout << "=======================================================================\n";
+	displayTitle("Update Product Menu");
 	std::cout << "1. Update Barcode" << std::endl;
 	std::cout << "2. Update Name" << std::endl;
 	std::cout << "3. Update Description" << std::endl;
@@ -1047,8 +1181,12 @@ void Inventory::updateProduct()
 		if (product.getID() == id)
 		{
 			found = true;
-			std::cout << "\nThe relevant product is found!\n";
+			clearScreen();
+			std::cout << "\nThe relevant product is found!\n\n";
 			product.display();
+
+			pauseScreen("Press Enter to continue...");
+			clearScreen();
 
 			//value update
 			switch(option)
@@ -1056,6 +1194,8 @@ void Inventory::updateProduct()
 				//barcode
 				case 1:
 				{
+					displayTitle("Update Product Barcode");
+
 					std::string barcode;
 					
 					while(true)
@@ -1085,6 +1225,7 @@ void Inventory::updateProduct()
 					}
 
 					product.setBarcode(barcode);
+					saveProducts();
 					std::cout << "Congratulations! The Product Barcode is updated successfully!" << std::endl;
 					break;
 				}
@@ -1092,6 +1233,8 @@ void Inventory::updateProduct()
 				//name
 				case 2:
 				{
+					displayTitle("Update Product Name");
+
 					std::string name;
 
 					while(true)
@@ -1115,6 +1258,7 @@ void Inventory::updateProduct()
 					}
 
 					product.setName(name);
+					saveProducts();
 					std::cout << "Congratulations! The Product Name is updated successfully!" << std::endl;
 					break;
 				}
@@ -1122,6 +1266,8 @@ void Inventory::updateProduct()
 				//description
 				case 3:
 				{
+					displayTitle("Update Product Description");
+
 					std::string description;
 
 					while(true)
@@ -1138,6 +1284,7 @@ void Inventory::updateProduct()
 					}
 
 					product.setDescription(description);
+					saveProducts();
 					std::cout << "Congratulations! The Product Description is updated successfully!" << std::endl;
 					break;
 				}
@@ -1145,6 +1292,8 @@ void Inventory::updateProduct()
 				//category
 				case 4:
 				{
+					displayTitle("Update Product Category");
+
 					std::string category;
 
 					while(true)
@@ -1157,10 +1306,17 @@ void Inventory::updateProduct()
 							continue;
 						}
 
+						if (!isValidCategory(category))
+						{
+							std::cout << "The Product Category is invalid. Please try again." << std::endl;
+							continue;
+						}
+
 						break;
 					}
 
 					product.setCategory(category);
+					saveProducts();
 					std::cout << "Congratulations! The Product Category is updated successfully!" << std::endl;
 					break;
 				}
@@ -1168,6 +1324,8 @@ void Inventory::updateProduct()
 				//quantity
 				case 5:
 				{
+					displayTitle("Update Product Quantity");
+
 					int quantity;
 
 					while(true)
@@ -1184,6 +1342,7 @@ void Inventory::updateProduct()
 					}
 
 					product.setQuantity(quantity);
+					saveProducts();
 					std::cout << "Congratulations! The Product Quantity is updated successfully!" << std::endl;
 					break;
 				}
@@ -1191,6 +1350,8 @@ void Inventory::updateProduct()
 				//price
 				case 6:
 				{
+					displayTitle("Update Product Price");
+
 					double price;
 
 					while(true)
@@ -1207,6 +1368,7 @@ void Inventory::updateProduct()
 					}
 
 					product.setPrice(price);
+					saveProducts();
 					std::cout << "Congratulations! The Product Price is updated successfully!" << std::endl;
 					break;
 				}
@@ -1214,6 +1376,8 @@ void Inventory::updateProduct()
 				//supplier
 				case 7:
 				{
+					displayTitle("Update Product Supplier");
+
 					std::string supplier;
 
 					while(true)
@@ -1238,6 +1402,7 @@ void Inventory::updateProduct()
 					}
 
 					product.setSupplier(supplier);
+					saveProducts();
 					std::cout << "Congratulations! The Product Supplier is updated successfully!" << std::endl;
 					break;
 				}
@@ -1245,6 +1410,8 @@ void Inventory::updateProduct()
 				//expiry date
 				case 8:
 				{
+					displayTitle("Update Product Expiry Date");
+
 					std::string expiryDate;
 
 					while (true)
@@ -1268,6 +1435,7 @@ void Inventory::updateProduct()
 					}
 
 					product.setExpiryDate(expiryDate);
+					saveProducts();
 					std::cout << "Congratulations! The Product Expiry Date is updated successfully!" << std::endl;
 					break;
 				}
@@ -1275,6 +1443,8 @@ void Inventory::updateProduct()
 				//manufacture date
 				case 9:
 				{
+					displayTitle("Update Product Manufacture Date");
+
 					std::string manufactureDate;
 
 					while(true)
@@ -1299,6 +1469,7 @@ void Inventory::updateProduct()
 					}
 
 					product.setManufactureDate(manufactureDate);
+					saveProducts();
 					std::cout << "Congratulations! The Product Manufacture Date is updated successfully!" << std::endl;
 					break;
 				}
@@ -1306,11 +1477,25 @@ void Inventory::updateProduct()
 				//RFID
 				case 10:
 				{
+					displayTitle("Update Product RFID UID");
+
 					std::string newRFID;
 
 					while (true)
 					{
 						newRFID = inputString("Enter a new RFID UID: ");
+
+						if (!isValidRFID(newRFID))
+						{
+							std::cout << "The Product RFID UID format is invalid. Please try again." << std::endl;
+							continue;
+						}
+
+						if (newRFID != product.getRFID() && isRFIDExist(newRFID))
+						{
+							std::cout << "The Product RFID UID already exists. Please enter another RFID UID." << std::endl;
+							continue;
+						}
 
 						if (newRFID == product.getRFID())
 						{
@@ -1321,6 +1506,7 @@ void Inventory::updateProduct()
 						break;
 					}
 					product.setRFID(newRFID);
+					saveProducts();
 					std::cout << "Congratulations! The Product RFID UID is updated successfully!" << std::endl;
 					break;
 				}
@@ -1436,9 +1622,7 @@ void Inventory::deleteProduct()
 
 	while (true)
 	{
-		std::cout << "=======================================================================\n";
-		std::cout << "Delete Products Menu\n";
-		std::cout << "=======================================================================\n";
+		displayTitle("Delete Product Menu");
 		std::cout << "Please enter the Product ID to delete: ";
 
 		if (std::cin >> id && id > 0)
@@ -1481,6 +1665,7 @@ void Inventory::deleteProduct()
 			if (confirm == 'y')
 			{
 				products.erase(it);
+				saveProducts();
 
 				std::cout << "\nCongratulations! The product is deleted successfully." << std::endl;
 			}
@@ -1514,9 +1699,7 @@ void Inventory::checkProductStatus()
 		return;
 	}
 
-	std::cout << "=======================================================================\n";
-	std::cout << "Product Status Monitoring Menu\n";
-	std::cout << "=======================================================================\n";
+	displayTitle("Product Status Monitoring Menu");
 
 	for (const auto& product : products)
 	{
