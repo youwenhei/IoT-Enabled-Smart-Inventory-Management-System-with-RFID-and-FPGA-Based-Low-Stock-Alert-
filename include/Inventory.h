@@ -50,7 +50,7 @@ public:
 	void checkProductStatus();
 	static const int LOW_STOCK_THRESHOLD = 10;
 
-	void saveProducts() const;
+	bool saveProducts() const;
 	void loadProducts();
 
 };
