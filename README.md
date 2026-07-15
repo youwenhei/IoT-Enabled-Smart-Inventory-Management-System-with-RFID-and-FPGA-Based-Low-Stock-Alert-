@@ -39,7 +39,7 @@ A C++ based inventory management application developed using Object-Oriented Pro
 - Wireless inventory synchronization
 - Real-time stock monitoring dashboard
 
-## Screenshots （C++)
+## Screenshots （Only C++ & without implement RFID)
 ### Main Menu
 ![Main Menu](screenshots/main_menu.png)
 ### Add Product
