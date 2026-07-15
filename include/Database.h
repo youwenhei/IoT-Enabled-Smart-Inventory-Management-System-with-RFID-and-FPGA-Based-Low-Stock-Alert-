@@ -1,3 +1,5 @@
+#ifndef DATABASE_H
+#define DATABASE_H
 #pragma once
 #include <jdbc/mysql_driver.h>
 #include <jdbc/mysql_connection.h>
@@ -13,3 +15,5 @@ public:
 
 	sql::Connection* getConnection() const;
 };
+
+#endif
