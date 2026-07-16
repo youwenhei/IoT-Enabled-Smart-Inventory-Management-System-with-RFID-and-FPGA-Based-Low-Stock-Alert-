@@ -398,6 +398,8 @@ bool Inventory::saveProducts() const
 			pstmt->setString(11, product.getRFID());
 
 			pstmt->execute();
+
+			std::cout << "Inserted ID: " << product.getID() << std::endl;
 		}
 
 		delete pstmt;
@@ -2030,7 +2032,14 @@ bool Inventory::updateProductInDatabase(const Product& product) const
 			pstmt->setString(9, product.getManufactureDate());
 		}
 
-		pstmt->setString(10, product.getRFID());
+		if (product.getRFID().empty())
+		{
+			pstmt->setNull(10, sql::DataType::VARCHAR);
+		}
+		else
+		{
+			pstmt->setString(10, product.getRFID());
+		}
 
 		pstmt->setInt(11, product.getID());
 
