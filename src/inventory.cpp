@@ -326,8 +326,35 @@ void returnProgram()
 }
 //=======================================================================
 //Save program
+	/*std::ofstream file("products.txt");
+
+	if (!file.is_open())
+	{
+		std::cout << "The file is unable to open." << std::endl;
+		return;
+	}
+
+	for (const auto& product : products)
+	{
+		file << product.getID() << "|"
+			<< product.getBarcode() << "|"
+			<< product.getRFID() << "|"
+			<< product.getName() << "|"
+			<< product.getDescription() << "|"
+			<< product.getCategory() << "|"
+			<< product.getQuantity() << "|"
+			<< std::fixed << std::setprecision(2)
+			<<product.getPrice() << "|"
+			<< product.getSupplier() << "|"
+			<< product.getExpiryDate() << "|"
+			<< product.getManufactureDate() << "|"
+			<< "\n";
+	}
+
+	file.close();*/
+
 bool Inventory::saveProducts() const
-{	
+{
 	try
 	{
 		sql::Connection* con = db.getConnection();
@@ -389,6 +416,76 @@ bool Inventory::saveProducts() const
 //Load program
 void Inventory::loadProducts()
 {
+	/*std::ifstream file("products.txt");
+
+	if (!file)
+	{
+		return;
+	}
+
+	std::string line;
+	
+	int maxID = 0;
+
+	while (std::getline(file, line))
+	{
+		std::stringstream ss(line);
+
+		std::string id;
+		std::string barcode;
+		std::string rfid;
+		std::string name;
+		std::string description;
+		std::string category;
+		std::string quantity;
+		std::string price;
+		std::string supplier;
+		std::string expiryDate;
+		std::string manufactureDate;
+
+		std::getline(ss, id, '|');
+		std::getline(ss, barcode, '|');
+		std::getline(ss, rfid, '|');
+		std::getline(ss, name, '|');
+		std::getline(ss, description, '|');
+		std::getline(ss, category, '|');
+		std::getline(ss, quantity, '|');
+		std::getline(ss, price, '|');
+		std::getline(ss, supplier, '|');
+		std::getline(ss, expiryDate, '|');
+		std::getline(ss, manufactureDate, '|');
+
+		if (id.empty() || barcode.empty())
+		{
+			continue;
+		}
+
+		Product product(
+			std::stoi(id),
+			barcode,
+			name,
+			description,
+			category,
+			std::stoi(quantity),
+			std::stod(price),
+			supplier,
+			expiryDate,
+			manufactureDate
+		);
+
+		product.setRFID(rfid);
+		products.push_back(product);
+
+		if (std::stoi(id) > maxID)
+		{
+			maxID = std::stoi(id);
+		}
+	}
+
+	newProductID = maxID + 1;
+
+	file.close();*/
+
 	try {
 		sql::Connection* con = db.getConnection();
 
@@ -1299,8 +1396,16 @@ void Inventory::updateProduct()
 					}
 
 					product.setBarcode(barcode);
-					saveProducts();
-					std::cout << "Congratulations! The Product Barcode is updated successfully!" << std::endl;
+					
+					if (updateProductInDatabase(product))
+					{
+						std::cout << "Congratulations! The Product Barcode is updated successfully!" << std::endl;
+					}
+					else
+					{
+						std::cout << "Failed to update the product in the database." << std::endl;
+					}
+
 					break;
 				}
 
@@ -1332,8 +1437,16 @@ void Inventory::updateProduct()
 					}
 
 					product.setName(name);
-					saveProducts();
-					std::cout << "Congratulations! The Product Name is updated successfully!" << std::endl;
+					
+					if (updateProductInDatabase(product))
+					{
+						std::cout << "Congratulations! The Product Name is updated successfully!" << std::endl;
+					}
+					else
+					{
+						std::cout << "Failed to update the product in the database." << std::endl;
+					}
+
 					break;
 				}
 
@@ -1358,8 +1471,16 @@ void Inventory::updateProduct()
 					}
 
 					product.setDescription(description);
-					saveProducts();
-					std::cout << "Congratulations! The Product Description is updated successfully!" << std::endl;
+
+					if (updateProductInDatabase(product))
+					{
+						std::cout << "Congratulations! The Product Description is updated successfully!" << std::endl;
+					}
+					else
+					{
+						std::cout << "Failed to update the product in the database." << std::endl;
+					}
+
 					break;
 				}
 
@@ -1390,8 +1511,16 @@ void Inventory::updateProduct()
 					}
 
 					product.setCategory(category);
-					saveProducts();
-					std::cout << "Congratulations! The Product Category is updated successfully!" << std::endl;
+					
+					if (updateProductInDatabase(product))
+					{
+						std::cout << "Congratulations! The Product Category is updated successfully!" << std::endl;
+					}
+					else
+					{
+						std::cout << "Failed to update the product in the database." << std::endl;
+					}
+
 					break;
 				}
 
@@ -1416,8 +1545,16 @@ void Inventory::updateProduct()
 					}
 
 					product.setQuantity(quantity);
-					saveProducts();
-					std::cout << "Congratulations! The Product Quantity is updated successfully!" << std::endl;
+					
+					if (updateProductInDatabase(product))
+					{
+						std::cout << "Congratulations! The Product Quantity is updated successfully!" << std::endl;
+					}
+					else
+					{
+						std::cout << "Failed to update the product in the database." << std::endl;
+					}
+
 					break;
 				}
 
@@ -1442,8 +1579,16 @@ void Inventory::updateProduct()
 					}
 
 					product.setPrice(price);
-					saveProducts();
-					std::cout << "Congratulations! The Product Price is updated successfully!" << std::endl;
+					
+					if (updateProductInDatabase(product))
+					{
+						std::cout << "Congratulations! The Product Price is updated successfully!" << std::endl;
+					}
+					else
+					{
+						std::cout << "Failed to update the product in the database." << std::endl;
+					}
+
 					break;
 				}
 
@@ -1476,8 +1621,16 @@ void Inventory::updateProduct()
 					}
 
 					product.setSupplier(supplier);
-					saveProducts();
-					std::cout << "Congratulations! The Product Supplier is updated successfully!" << std::endl;
+					
+					if (updateProductInDatabase(product))
+					{
+						std::cout << "Congratulations! The Product Supplier is updated successfully!" << std::endl;
+					}
+					else
+					{
+						std::cout << "Failed to update the product in the database." << std::endl;
+					}
+
 					break;
 				}
 
@@ -1509,8 +1662,16 @@ void Inventory::updateProduct()
 					}
 
 					product.setExpiryDate(expiryDate);
-					saveProducts();
-					std::cout << "Congratulations! The Product Expiry Date is updated successfully!" << std::endl;
+					
+					if (updateProductInDatabase(product))
+					{
+						std::cout << "Congratulations! The Product Expiry Date is updated successfully!" << std::endl;
+					}
+					else
+					{
+						std::cout << "Failed to update the product in the database." << std::endl;
+					}
+
 					break;
 				}
 
@@ -1543,8 +1704,16 @@ void Inventory::updateProduct()
 					}
 
 					product.setManufactureDate(manufactureDate);
-					saveProducts();
-					std::cout << "Congratulations! The Product Manufacture Date is updated successfully!" << std::endl;
+					
+					if (updateProductInDatabase(product))
+					{
+						std::cout << "Congratulations! The Product Manufacture Date is updated successfully!" << std::endl;
+					}
+					else
+					{
+						std::cout << "Failed to update the product in the database." << std::endl;
+					}
+
 					break;
 				}
 
@@ -1579,9 +1748,18 @@ void Inventory::updateProduct()
 
 						break;
 					}
+
 					product.setRFID(newRFID);
-					saveProducts();
-					std::cout << "Congratulations! The Product RFID UID is updated successfully!" << std::endl;
+					
+					if (updateProductInDatabase(product))
+					{
+						std::cout << "Congratulations! The Product RFID UID is updated successfully!" << std::endl;
+					}
+					else
+					{
+						std::cout << "Failed to update the product in the database." << std::endl;
+					}
+
 					break;
 				}
 
@@ -1801,4 +1979,70 @@ void Inventory::checkProductStatus()
 
 	pauseScreen("Press Enter to return...");
 	clearScreen();
+}
+//=======================================================================
+//Update database
+bool Inventory::updateProductInDatabase(const Product& product) const
+{
+	try
+	{
+		sql::Connection* con = db.getConnection();
+
+		sql::PreparedStatement* pstmt =
+			con->prepareStatement(
+				"UPDATE products "
+				"SET barcode=?, "
+				"name=?, "
+				"description=?, "
+				"category=?, "
+				"quantity=?, "
+				"price=?, "
+				"supplier=?, "
+				"expiry_date=?, "
+				"manufacture_date=?, "
+				"rfid_uid=?, "
+				"WHERE product_ID=?"
+			);
+
+		pstmt->setString(1, product.getBarcode());
+		pstmt->setString(2, product.getName());
+		pstmt->setString(3, product.getDescription());
+		pstmt->setString(4, product.getCategory());
+		pstmt->setInt(5, product.getQuantity());
+		pstmt->setDouble(6, product.getPrice());
+		pstmt->setString(7, product.getSupplier());
+
+		if (product.getExpiryDate().empty())
+		{
+			pstmt->setNull(8, sql::DataType::DATE);
+		}
+		else
+		{
+			pstmt->setString(8, product.getExpiryDate());
+		}
+
+		if (product.getManufactureDate().empty())
+		{
+			pstmt->setNull(9, sql::DataType::DATE);
+		}
+		else
+		{
+			pstmt->setString(9, product.getManufactureDate());
+		}
+
+		pstmt->setString(10, product.getRFID());
+
+		pstmt->execute();
+
+		delete pstmt;
+
+		return true;
+	}
+
+	catch (sql::SQLException& e)
+	{
+		std::cout << "Database Error: " << e.what() << std::endl;
+
+		return false;
+	}
 }
