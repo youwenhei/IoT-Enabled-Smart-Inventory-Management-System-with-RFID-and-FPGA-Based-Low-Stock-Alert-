@@ -2000,7 +2000,7 @@ bool Inventory::updateProductInDatabase(const Product& product) const
 				"supplier=?, "
 				"expiry_date=?, "
 				"manufacture_date=?, "
-				"rfid_uid=?, "
+				"rfid_uid=? "
 				"WHERE product_ID=?"
 			);
 
@@ -2031,6 +2031,8 @@ bool Inventory::updateProductInDatabase(const Product& product) const
 		}
 
 		pstmt->setString(10, product.getRFID());
+
+		pstmt->setInt(11, product.getID());
 
 		pstmt->execute();
 
