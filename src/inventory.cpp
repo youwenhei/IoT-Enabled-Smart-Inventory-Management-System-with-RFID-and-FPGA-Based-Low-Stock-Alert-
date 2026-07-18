@@ -2312,7 +2312,7 @@ bool Inventory::exportCSV() const
 		return false;
 	}
 
-	file << "ID," << "Barcode," << "Name," << "Category,"
+	file << "ID," << "Barcode," << "RFID," << "Name," << "Category,"
 		<< "Description," << "Quantity," << "Price," << "Supplier"
 		<< "Expiry Date," << "Manufacture Date\n";
 
@@ -2320,6 +2320,7 @@ bool Inventory::exportCSV() const
 	{
 		file << product.getID() << ","
 			 << product.getBarcode() << ","
+			 << product.getRFID() << ","
 			 << product.getName() << ","
 			 << product.getCategory() << ","
 			 << product.getDescription() << ","
@@ -2343,7 +2344,7 @@ bool Inventory::exportTXT() const
 		return false;
 	}
 
-	file << "ID," << "Barcode," << "Name," << "Category,"
+	file << "ID," << "Barcode," << "RFID," << "Name," << "Category,"
 		<< "Description," << "Quantity," << "Price," << "Supplier"
 		<< "Expiry Date," << "Manufacture Date\n";
 
@@ -2351,6 +2352,7 @@ bool Inventory::exportTXT() const
 	{
 		file << product.getID() << ","
 			<< product.getBarcode() << ","
+			<< product.getRFID() << ","
 			<< product.getName() << ","
 			<< product.getCategory() << ","
 			<< product.getDescription() << ","
