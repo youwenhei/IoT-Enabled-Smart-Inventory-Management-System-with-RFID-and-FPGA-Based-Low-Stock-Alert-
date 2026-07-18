@@ -1,7 +1,8 @@
-#include "Utility.h"
 #include <iostream>
 #include <cstdlib>
 #include <limits>
+#include <ctime>
+#include "Utility.h"
 
 void clearScreen()
 {
@@ -40,4 +41,19 @@ void displayTitle(const std::string& title)
 	std::cout << "=======================================================================\n";
 	std::cout << title << std::endl;
 	std::cout << "=======================================================================\n";
+}
+
+std::string getCurrentDate()
+{
+	time_t now = time(nullptr);
+
+	tm localTime{};
+
+	localtime_s(&localTime, &now);
+
+	char buffer[11];
+
+	strftime(buffer, sizeof(buffer), "%Y-%m-%d", &localTime);
+
+	return std::string(buffer);
 }
