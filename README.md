@@ -1,10 +1,14 @@
-# IoT-Enabled Smart Inventory Management System with RFID, Database, and FPGA-Based Stock Monitoring
+# IoT-Enabled Smart Inventory Management System with RFID, Database, and FPGA-Based Low-Stock Alert
+
+Project Progress: Still on Progress
+
+Complete Project Name: IoT-Enabled Smart Inventory Management System with RFID, Database, and FPGA-Based Stock Monitoring
 
 ## Description
 
 A C++ based smart inventory management system developed using Object-Oriented Programming (OOP) principles.
 
-The system provides complete product management functionalities with MySQL database integration, inventory dashboard monitoring, and report generation. It also supports RFID UID management and prepares future integration with IoT devices such as ESP32 for real-time inventory monitoring.
+The system provides complete product management functionalities with MySQL database integration, inventory dashboard monitoring, and report generation. The system provides inventory management functionalities with MySQL database integration, dashboard monitoring, RFID-based product identification, and IoT device status monitoring.
 
 ---
 
@@ -43,6 +47,11 @@ The system provides complete product management functionalities with MySQL datab
    - Inventory Value
    - RFID Registration Rate
 
+## IoT Device Monitoring
+✔ ESP32 Connection Status Monitoring  
+✔ RFID Module Connection Status Monitoring  
+✔ Device Communication Status Display
+
 ## Database Integration
 ✔ MySQL Database Storage  
 ✔ CRUD Database Operations  
@@ -54,10 +63,13 @@ The system provides complete product management functionalities with MySQL datab
 ✔ CSV Inventory Report Export  
 ✔ TXT Inventory Report Export
 
-## RFID Support
+## RFID Integration
 ✔ RFID UID Storage  
 ✔ RFID UID Update  
-✔ RFID-ready Product Identification
+✔ RFID Product Identification  
+✔ RFID Scanner Module  
+✔ RFID-based Product Lookup
+✔ RFID Connection Status Monitoring
 
 ---
 
@@ -78,10 +90,10 @@ The system provides complete product management functionalities with MySQL datab
 - MySQL
 - MySQL Connector/C++
 
-## Hardware Preparation
-- ESP32 (Future Integration)
-- MFRC522 RFID Module (Future Integration)
-- FPGA Low-Stock Alert System (Future Integration)
+## Hardware Integration
+- ESP32 Microcontroller
+- MFRC522 RFID Module
+- FPGA-Based Low-Stock Alert System (Planned)
 
 ## Tools
 - Visual Studio
@@ -154,6 +166,16 @@ The system provides complete product management functionalities with MySQL datab
 ![CSV Report](screenshots/v2.0/csv_export.png)
 ![TXT Report](screenshots/v2.0/txt_report.png)
 
+# Version 3.0 - 
+
+### RFID Scanner
+
+![RFID Scanner](screenshots/v3.0/rfid_scanner.png)
+
+### IoT Device Status Monitoring
+
+![Device Status](screenshots/v3.0/device_status_dashboard.png)
+
 ---
 
 # Version History
@@ -184,14 +206,21 @@ Implemented:
 
 ---
 
-## v3.0 (Planned)
-IoT Hardware Integration.
+## v3.0
+RFID and IoT Device Integration.
 
-Planned:
-- ESP32 integration
-- MFRC522 RFID module communication
-- Wireless product identification
-- Real-time inventory synchronization
+Implemented:
+- RFID UID-based product identification
+- RFID scanner module
+- ESP32 device status monitoring
+- RFID connection monitoring
+
+## v3.5
+Advanced Features:
+-ESP32 sends sensor data
+-MQTT communication
+-Automatic database update
+-Dashboard auto refresh
 
 ---
 
