@@ -5,22 +5,23 @@
 #include <limits>
 #include <cmath>
 #include <string>
-#include <stdexcept>
-#include <fstream>
-#include <sstream>
+#include <memory>
 #include <iomanip>
+#include <ostream>
+#include <fstream>
+#include <jdbc/cppconn/connection.h>
 #include <jdbc/cppconn/prepared_statement.h>
 #include <jdbc/cppconn/resultset.h>
 #include <jdbc/cppconn/exception.h>
+#include <jdbc/cppconn/datatype.h>
 #include "Inventory.h"
 #include "Utility.h"
-//=======================================================================
+#include "Database.h"
+
 Inventory::Inventory()
 {
 	newProductID = 1;
 	loadProducts();
-
-	//std::cout << "Loaded products: " << products.size() << std::endl;
 }
 //=======================================================================
 //Date validation
@@ -201,31 +202,26 @@ bool isValidRFID(const std::string& rfid)
 //RFID uniqueness
 bool Inventory::isRFIDExist(const std::string& rfid) const
 {
-	std::string inputRFID = rfid;
-
-	std::transform(
-		inputRFID.begin(),
-		inputRFID.end(),
-		inputRFID.begin(),
-		[](unsigned char c)
-		{
-			return std::toupper(c);
-		}
-	);
-
-	for (const auto& product : products)
+	auto toUpper = [](std::string& str)
 	{
-		std::string existingRFID = product.getRFID();
-
 		std::transform(
-			existingRFID.begin(),
-			existingRFID.end(),
-			existingRFID.begin(),
+			str.begin(),
+			str.end(),
+			str.begin(),
 			[](unsigned char c)
 			{
 				return std::toupper(c);
 			}
 		);
+	};
+
+	std::string inputRFID = rfid;
+	toUpper(inputRFID);
+
+	for (const auto& product : products)
+	{
+		std::string existingRFID = product.getRFID();
+		toUpper(existingRFID);
 
 		if (existingRFID == inputRFID)
 		{
@@ -283,9 +279,35 @@ bool Inventory::hasProducts() const
 //Display product function
 void Inventory::displayProducts() const
 {
-	for (const auto& product : products)
+	if (products.empty())
 	{
-		product.display();
+		std::cout << "No products found." << std::endl;
+		return;
+	}
+
+	const int PAGE_SIZE = 10;
+	int totalPages = static_cast<int>(products.size() + PAGE_SIZE - 1) / PAGE_SIZE;
+	int currentPage = 0;
+
+	while (currentPage < totalPages)
+	{
+		clearScreen();
+
+		int start = currentPage * PAGE_SIZE;
+		int end = std::min(start + PAGE_SIZE, (int)products.size());
+
+		for (int i = start; i < end; i++)
+		{
+			products[i].display();
+		}
+
+		currentPage++;
+
+		if (currentPage < totalPages)
+		{
+			std::cout << "\nPress Enter for next page...";
+			std::cin.get();
+		}
 	}
 }
 //=======================================================================
@@ -326,178 +348,122 @@ void returnProgram()
 }
 //=======================================================================
 //Save program
-	/*std::ofstream file("products.txt");
-
-	if (!file.is_open())
-	{
-		std::cout << "The file is unable to open." << std::endl;
-		return;
-	}
-
-	for (const auto& product : products)
-	{
-		file << product.getID() << "|"
-			<< product.getBarcode() << "|"
-			<< product.getRFID() << "|"
-			<< product.getName() << "|"
-			<< product.getDescription() << "|"
-			<< product.getCategory() << "|"
-			<< product.getQuantity() << "|"
-			<< std::fixed << std::setprecision(2)
-			<<product.getPrice() << "|"
-			<< product.getSupplier() << "|"
-			<< product.getExpiryDate() << "|"
-			<< product.getManufactureDate() << "|"
-			<< "\n";
-	}
-
-	file.close();*/
-
-bool Inventory::saveProducts() const
+bool Inventory::insertProductToDatabase(const Product&  product)
 {
+
 	try
 	{
-		sql::Connection* con = db.getConnection();
+		auto con = db.getConnection();
 
-		sql::PreparedStatement* pstmt =
+		if (con == nullptr)
+		{
+			return false;
+		}
+
+		con->setAutoCommit(false);
+
+		std::unique_ptr<sql::PreparedStatement> pstmt(
 			con->prepareStatement(
 				"INSERT INTO products "
 				"(product_ID, barcode, name, description, category, quantity, price, supplier, expiry_date, manufacture_date, rfid_uid) "
 				"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-			);
+			)
+		);
 
-		for (const auto& product : products)
-		{
-			pstmt->setInt(1, product.getID());
-			pstmt->setString(2, product.getBarcode());
-			pstmt->setString(3, product.getName());
-			pstmt->setString(4, product.getDescription());
-			pstmt->setString(5, product.getCategory());
-			pstmt->setInt(6, product.getQuantity());
-			pstmt->setDouble(7, product.getPrice());
-			pstmt->setString(8, product.getSupplier());
+		pstmt->setInt(1, product.getID());
+		pstmt->setString(2, product.getBarcode());
+		pstmt->setString(3, product.getName());
+		pstmt->setString(4, product.getDescription());
+		pstmt->setString(5, product.getCategory());
+		pstmt->setInt(6, product.getQuantity());
+		pstmt->setDouble(7, product.getPrice());
+		pstmt->setString(8, product.getSupplier());
 			
-			if (9, product.getExpiryDate().empty())
-			{
-				pstmt->setNull(9, sql::DataType::DATE);
-			}
-			else
-			{
-				pstmt->setString(9, product.getExpiryDate());
-			}
-
-			if (10, product.getManufactureDate().empty())
-			{
-				pstmt->setNull(10, sql::DataType::DATE);
-			}
-			else
-			{
-				pstmt->setString(10, product.getManufactureDate());
-			}
-
-			pstmt->setString(11, product.getRFID());
-
-			pstmt->execute();
-
-			std::cout << "Inserted ID: " << product.getID() << std::endl;
+		if (product.getExpiryDate().empty())
+		{
+			pstmt->setNull(9, sql::DataType::DATE);
+		}
+		else
+		{
+			pstmt->setString(9, product.getExpiryDate());
 		}
 
-		delete pstmt;
+		if (product.getManufactureDate().empty())
+		{
+			pstmt->setNull(10, sql::DataType::DATE);
+		}
+		else
+		{
+			pstmt->setString(10, product.getManufactureDate());
+		}
 
-		return true;
+		if (product.getRFID().empty())
+		{
+			pstmt->setNull(11, sql::DataType::VARCHAR);
+		}
+		else
+		{
+			pstmt->setString(11, product.getRFID());
+		}
+
+		int rows = pstmt->executeUpdate();
+
+		if (rows > 0)
+		{
+			con->commit();
+			con->setAutoCommit(true);
+			return true;
+		}
+		else
+		{
+			con->rollback();
+			con->setAutoCommit(true);
+			return false;
+		}
 	}
 
 	catch (sql::SQLException& e)
 	{
-		std::cout << "Database Error: " << e.what() << std::endl;
+		try
+		{
+			auto con = db.getConnection();
+			con->rollback();
+			con->setAutoCommit(true);
+		}
 
+		catch (sql::SQLException& e)
+		{
+
+		}
+
+		std::cout << "Database Error: " << e.what() 
+				  << "\nError Code: " << e.getErrorCode() 
+			      << "\nSQL State: " << e.getSQLState()
+			      << std::endl;
 		return false;
 	}
 }
 //=======================================================================
 //Load program
-void Inventory::loadProducts()
+bool Inventory::loadProducts()
 {
-	/*std::ifstream file("products.txt");
+	products.clear();
+	products.reserve(100);
 
-	if (!file)
+	try 
 	{
-		return;
-	}
+		auto con = db.getConnection();
 
-	std::string line;
-	
-	int maxID = 0;
-
-	while (std::getline(file, line))
-	{
-		std::stringstream ss(line);
-
-		std::string id;
-		std::string barcode;
-		std::string rfid;
-		std::string name;
-		std::string description;
-		std::string category;
-		std::string quantity;
-		std::string price;
-		std::string supplier;
-		std::string expiryDate;
-		std::string manufactureDate;
-
-		std::getline(ss, id, '|');
-		std::getline(ss, barcode, '|');
-		std::getline(ss, rfid, '|');
-		std::getline(ss, name, '|');
-		std::getline(ss, description, '|');
-		std::getline(ss, category, '|');
-		std::getline(ss, quantity, '|');
-		std::getline(ss, price, '|');
-		std::getline(ss, supplier, '|');
-		std::getline(ss, expiryDate, '|');
-		std::getline(ss, manufactureDate, '|');
-
-		if (id.empty() || barcode.empty())
-		{
-			continue;
-		}
-
-		Product product(
-			std::stoi(id),
-			barcode,
-			name,
-			description,
-			category,
-			std::stoi(quantity),
-			std::stod(price),
-			supplier,
-			expiryDate,
-			manufactureDate
-		);
-
-		product.setRFID(rfid);
-		products.push_back(product);
-
-		if (std::stoi(id) > maxID)
-		{
-			maxID = std::stoi(id);
-		}
-	}
-
-	newProductID = maxID + 1;
-
-	file.close();*/
-
-	try {
-		sql::Connection* con = db.getConnection();
-
-		sql::PreparedStatement* pstmt =
+		std::unique_ptr<sql::PreparedStatement> pstmt(
 			con->prepareStatement(
 				"SELECT product_ID, barcode, rfid_uid, name, description, category, quantity, price, supplier, expiry_date, manufacture_date "
 				"FROM products"
-			);
+			)
+		);
 
-		sql::ResultSet* res = pstmt->executeQuery();
+		std::unique_ptr<sql::ResultSet> res(
+			pstmt->executeQuery()
+		);
 
 		int maxID = 0;
 
@@ -506,7 +472,13 @@ void Inventory::loadProducts()
 			int id = res->getInt("product_ID");
 
 			std::string barcode = res->getString("barcode");
-			std::string rfid = res->getString("rfid_uid");
+
+			std::string rfid;
+			if (!res->isNull("rfid_uid"))
+			{
+				rfid = res->getString("rfid_uid");
+			}
+
 			std::string name = res->getString("name");
 			std::string description = res->getString("description");
 			std::string category = res->getString("category");
@@ -515,7 +487,7 @@ void Inventory::loadProducts()
 			double price = res->getDouble("price");
 
 			std::string supplier = res->getString("supplier");
-			
+
 			std::string expiryDate;
 			std::string manufactureDate;
 
@@ -532,6 +504,7 @@ void Inventory::loadProducts()
 			Product product(
 				id,
 				barcode,
+				rfid,
 				name,
 				description,
 				category,
@@ -541,8 +514,6 @@ void Inventory::loadProducts()
 				expiryDate,
 				manufactureDate
 			);
-
-			product.setRFID(rfid);
 
 			products.push_back(product);
 
@@ -554,26 +525,29 @@ void Inventory::loadProducts()
 
 		newProductID = maxID + 1;
 
-		delete res;
-		delete pstmt;
+		return true;
 	}
 
 	catch (sql::SQLException& e)
 	{
-		std::cout << "Database Load Error: " << e.what() << std::endl;
+		std::cout << "Database Error: " << e.what()
+			<< "\nError Code: " << e.getErrorCode()
+			<< "\nSQL State: " << e.getSQLState()
+			<< std::endl;
+		return false;
 	}
 }
-//=======================================================================
+
 //=======================================================================
 //Functions in Main Menu
 //=======================================================================
-//=======================================================================
+
 //Main Add function
 void Inventory::addProduct()
 {
 	int quantity;
 	double price;
-	std::string barcode, name, description, category, supplier, expiryDate, manufactureDate;
+	std::string barcode, rfid, name, description, category, supplier, expiryDate, manufactureDate;
 
 	displayTitle("Add Product Menu");
 
@@ -613,7 +587,7 @@ void Inventory::addProduct()
 			std::cout << "The Product Name format is invalid. Please re-enter the Product Name." << std::endl;
 			std::cout << "Thank you for your understanding." << std::endl;
 			continue;
-		}	
+		}
 		break;
 	}
 
@@ -728,18 +702,51 @@ void Inventory::addProduct()
 		break;
 	}
 
+	//rfid validation
+	while (true)
+	{
+		std::cout << "Please eneter the Product RFID UID (8 hex digits): ";
+		std::getline(std::cin, rfid);
+		rfid = trim(rfid);
+
+		if (rfid.empty())
+		{
+			break;
+		}
+
+		if (!isValidRFID(rfid))
+		{
+			std::cout << "The RFID format is invalid. Please try again!" << std::endl;
+			continue;
+		}
+
+		if (isRFIDExist(rfid))
+		{
+			std::cout << "The RFID already exists. Please try again!" << std::endl;
+			continue;
+		}
+
+		break;
+	}
+
 	//check for expiry date and manufacture date
 	//YYYY-MM-DD format allow lexicographical comparison (string comparison)
-	if (!expiryDate.empty() && !manufactureDate.empty() && expiryDate < manufactureDate)
+	while (true)
 	{
-		std::cout << "The Product Expiry Date cannot be earlier than the Product Manufacture Date. Please re-enter the dates." << std::endl;
-		std::cout << "Thank you for your understanding." << std::endl;
-		return addProduct();
+		if (!expiryDate.empty() && !manufactureDate.empty() && expiryDate < manufactureDate)
+		{
+			std::cout << "The Product Expiry Date cannot be earlier than the Product Manufacture Date. Please re-enter the dates." << std::endl;
+			std::cout << "Thank you for your understanding." << std::endl;
+			return;
+		}
+
+		break;
 	}
 
 	Product newProduct(
 		newProductID,
 		barcode,
+		rfid,
 		name,
 		description,
 		category,
@@ -754,7 +761,7 @@ void Inventory::addProduct()
 
 	try
 	{
-		if (saveProducts())
+		if (insertProductToDatabase(newProduct))
 		{
 			newProductID++;
 
@@ -776,21 +783,7 @@ void Inventory::addProduct()
 	{
 		products.pop_back();
 
-		if (saveProducts())
-		{
-			newProductID++;
-
-			std::cout << "=======================================================================\n";
-			std::cout << "Congratulations! The product is added successfully!\n";
-		}
-
-		else
-		{
-			products.pop_back();
-
-			std::cout << "=======================================================================\n";
-			std::cout << "Unexpected Error: " << e.what() << std::endl;
-		}
+		std::cout << "Unexpected Error: " << e.what() << std::endl;
 	}
 }
 //ADD function
@@ -1397,15 +1390,14 @@ void Inventory::updateProduct()
 						break;
 					}
 
+					std::string oldBarcode = product.getBarcode();
+
 					product.setBarcode(barcode);
-					
-					if (updateProductInDatabase(product))
+
+
+					if (!updateProductInDatabase(product))
 					{
-						std::cout << "Congratulations! The Product Barcode is updated successfully!" << std::endl;
-					}
-					else
-					{
-						std::cout << "Failed to update the product in the database." << std::endl;
+						product.setBarcode(oldBarcode);
 					}
 
 					break;
@@ -1438,15 +1430,14 @@ void Inventory::updateProduct()
 						break;
 					}
 
+					std::string oldName = product.getName();
+
 					product.setName(name);
-					
-					if (updateProductInDatabase(product))
+
+
+					if (!updateProductInDatabase(product))
 					{
-						std::cout << "Congratulations! The Product Name is updated successfully!" << std::endl;
-					}
-					else
-					{
-						std::cout << "Failed to update the product in the database." << std::endl;
+						product.setName(oldName);
 					}
 
 					break;
@@ -1472,15 +1463,14 @@ void Inventory::updateProduct()
 						break;
 					}
 
+					std::string oldDescription = product.getDescription();
+
 					product.setDescription(description);
 
-					if (updateProductInDatabase(product))
+
+					if (!updateProductInDatabase(product))
 					{
-						std::cout << "Congratulations! The Product Description is updated successfully!" << std::endl;
-					}
-					else
-					{
-						std::cout << "Failed to update the product in the database." << std::endl;
+						product.setDescription(oldDescription);
 					}
 
 					break;
@@ -1512,15 +1502,14 @@ void Inventory::updateProduct()
 						break;
 					}
 
+					std::string oldCategory = product.getCategory();
+
 					product.setCategory(category);
-					
-					if (updateProductInDatabase(product))
+
+
+					if (!updateProductInDatabase(product))
 					{
-						std::cout << "Congratulations! The Product Category is updated successfully!" << std::endl;
-					}
-					else
-					{
-						std::cout << "Failed to update the product in the database." << std::endl;
+						product.setCategory(oldCategory);
 					}
 
 					break;
@@ -1546,15 +1535,14 @@ void Inventory::updateProduct()
 						break;
 					}
 
+					int oldQuantity = product.getQuantity();
+
 					product.setQuantity(quantity);
-					
-					if (updateProductInDatabase(product))
+
+
+					if (!updateProductInDatabase(product))
 					{
-						std::cout << "Congratulations! The Product Quantity is updated successfully!" << std::endl;
-					}
-					else
-					{
-						std::cout << "Failed to update the product in the database." << std::endl;
+						product.setQuantity(oldQuantity);
 					}
 
 					break;
@@ -1580,15 +1568,14 @@ void Inventory::updateProduct()
 						break;
 					}
 
+					double oldPrice = product.getPrice();
+
 					product.setPrice(price);
-					
-					if (updateProductInDatabase(product))
+
+
+					if (!updateProductInDatabase(product))
 					{
-						std::cout << "Congratulations! The Product Price is updated successfully!" << std::endl;
-					}
-					else
-					{
-						std::cout << "Failed to update the product in the database." << std::endl;
+						product.setPrice(oldPrice);
 					}
 
 					break;
@@ -1622,15 +1609,14 @@ void Inventory::updateProduct()
 						break;
 					}
 
+					std::string oldSupplier = product.getSupplier();
+
 					product.setSupplier(supplier);
-					
-					if (updateProductInDatabase(product))
+
+
+					if (!updateProductInDatabase(product))
 					{
-						std::cout << "Congratulations! The Product Supplier is updated successfully!" << std::endl;
-					}
-					else
-					{
-						std::cout << "Failed to update the product in the database." << std::endl;
+						product.setSupplier(oldSupplier);
 					}
 
 					break;
@@ -1663,15 +1649,14 @@ void Inventory::updateProduct()
 						break;
 					}
 
+					std::string oldExpiryDate = product.getExpiryDate();
+
 					product.setExpiryDate(expiryDate);
-					
-					if (updateProductInDatabase(product))
+
+
+					if (!updateProductInDatabase(product))
 					{
-						std::cout << "Congratulations! The Product Expiry Date is updated successfully!" << std::endl;
-					}
-					else
-					{
-						std::cout << "Failed to update the product in the database." << std::endl;
+						product.setExpiryDate(oldExpiryDate);
 					}
 
 					break;
@@ -1705,15 +1690,14 @@ void Inventory::updateProduct()
 						break;
 					}
 
+					std::string oldManufactureDate = product.getManufactureDate();
+
 					product.setManufactureDate(manufactureDate);
-					
-					if (updateProductInDatabase(product))
+
+
+					if (!updateProductInDatabase(product))
 					{
-						std::cout << "Congratulations! The Product Manufacture Date is updated successfully!" << std::endl;
-					}
-					else
-					{
-						std::cout << "Failed to update the product in the database." << std::endl;
+						product.setManufactureDate(oldManufactureDate);
 					}
 
 					break;
@@ -1730,9 +1714,14 @@ void Inventory::updateProduct()
 					{
 						newRFID = inputString("Enter a new RFID UID: ");
 
-						if (!isValidRFID(newRFID))
+						if (newRFID.empty())
 						{
-							std::cout << "The Product RFID UID format is invalid. Please try again." << std::endl;
+							break;
+						}
+
+						if (!newRFID.empty() && !isValidRFID(newRFID))
+						{
+							std::cout << "The RFID format is invalid. Please try again.\n";
 							continue;
 						}
 
@@ -1751,17 +1740,15 @@ void Inventory::updateProduct()
 						break;
 					}
 
-					product.setRFID(newRFID);
-					
-					if (updateProductInDatabase(product))
-					{
-						std::cout << "Congratulations! The Product RFID UID is updated successfully!" << std::endl;
-					}
-					else
-					{
-						std::cout << "Failed to update the product in the database." << std::endl;
-					}
+					std::string oldRFID = product.getRFID();
 
+					product.setRFID(newRFID);
+
+
+					if (!updateProductInDatabase(product))
+					{
+						product.setRFID(oldRFID);
+					}
 					break;
 				}
 
@@ -1921,7 +1908,6 @@ void Inventory::deleteProduct()
 				if (deleteProductFromDatabase(id))
 				{
 					products.erase(it);
-					saveProducts();
 
 					std::cout << "\nCongratulations! The product is deleted successfully." << std::endl;
 				}
@@ -1989,19 +1975,26 @@ void Inventory::checkProductStatus()
 	pauseScreen("Press Enter to return...");
 	clearScreen();
 }
-//=======================================================================
+
 //=======================================================================
 //Database
 //=======================================================================
-//=======================================================================
+
 //Update database
 bool Inventory::updateProductInDatabase(const Product& product) const
 {
 	try
 	{
-		sql::Connection* con = db.getConnection();
+		auto con = db.getConnection();
 
-		sql::PreparedStatement* pstmt =
+		if (con == nullptr)
+		{
+			return false;
+		}
+
+		con->setAutoCommit(false);
+
+		std::unique_ptr<sql::PreparedStatement> pstmt(
 			con->prepareStatement(
 				"UPDATE products "
 				"SET barcode=?, "
@@ -2015,7 +2008,8 @@ bool Inventory::updateProductInDatabase(const Product& product) const
 				"manufacture_date=?, "
 				"rfid_uid=? "
 				"WHERE product_ID=?"
-			);
+			)
+		);
 
 		pstmt->setString(1, product.getBarcode());
 		pstmt->setString(2, product.getName());
@@ -2054,17 +2048,40 @@ bool Inventory::updateProductInDatabase(const Product& product) const
 
 		pstmt->setInt(11, product.getID());
 
-		pstmt->execute();
+		int rows = pstmt->executeUpdate();
 
-		delete pstmt;
-
-		return true;
+		if (rows > 0)
+		{
+			con->commit();
+			con->setAutoCommit(true);
+			return true;
+		}
+		else
+		{
+			con->rollback();
+			con->setAutoCommit(true);
+			return false;
+		}
 	}
 
 	catch (sql::SQLException& e)
 	{
-		std::cout << "Database Error: " << e.what() << std::endl;
+		try
+		{
+			auto con = db.getConnection();
+			con->rollback();
+			con->setAutoCommit(true);
+		}
 
+		catch (sql::SQLException& e)
+		{
+
+		}
+
+		std::cout << "Database Error: " << e.what()
+			      << "\nError Code: " << e.getErrorCode()
+			      << "\nSQL State: " << e.getSQLState() 
+			      << std::endl;
 		return false;
 	}
 }
@@ -2074,26 +2091,276 @@ bool Inventory::deleteProductFromDatabase(int productID)
 {
 	try
 	{
-		sql::Connection* con = db.getConnection();
+		auto con = db.getConnection();
 
-		sql::PreparedStatement* pstmt =
+		if (con == nullptr)
+		{
+			return false;
+		}
+
+		con->setAutoCommit(false);
+
+		std::unique_ptr<sql::PreparedStatement> pstmt(
 			con->prepareStatement(
 				"DELETE FROM products WHERE product_ID=?"
-			);
+			)
+		);
 
 		pstmt->setInt(1, productID);
 
-		pstmt->execute();
+		int rows = pstmt->executeUpdate();
 
-		delete pstmt;
-
-		return true;
+		if (rows > 0)
+		{
+			con->commit();
+			con->setAutoCommit(true);
+			return true;
+		}
+		else
+		{
+			con->rollback();
+			con->setAutoCommit(true);
+			return false;
+		}
 	}
 
 	catch (sql::SQLException& e)
 	{
-		std::cout << "Database Error: " << e.what() << std::endl;
+		try
+		{
+			auto con = db.getConnection();
+			con->rollback();
+			con->setAutoCommit(true);
+		}
 
+		catch (sql::SQLException& e)
+		{
+
+		}
+
+		std::cout << "Database Error: " << e.what()
+			      << "\nError Code: " << e.getErrorCode()
+			      << "\nSQL State: " << e.getSQLState()
+			      << std::endl;
 		return false;
 	}
+}
+
+//=======================================================================
+//Additional Function
+//=======================================================================
+
+//Refresh product
+void Inventory::refreshProducts()
+{
+	clearScreen();
+	displayTitle("Refresh Product List");
+
+	if (loadProducts())
+	{
+		std::cout << "Refresh success.\n";
+	}
+	else
+	{
+		std::cout << "Refresh failed.\n";
+	}
+
+	pauseScreen("Press Enter to return...");
+}
+//=======================================================================
+//Display dashboard
+void Inventory::displayDashboard() const
+{
+	clearScreen();
+
+	if (products.empty())
+	{
+		displayTitle("Smart Inventory Dashboard");
+		std::cout << "No products found.\n";
+		pauseScreen("Press Enter to return...");
+		return;
+	}
+
+	int expiryCount = 0;
+	int noRFIDCount = 0;
+	int expiredCount = 0;
+	int lowStockCount = 0;
+	int outOfStockCount = 0;
+	int totalQuantity = 0;
+	double totalValue = 0;
+	double maxPrice = products[0].getPrice();
+	double minPrice = products[0].getPrice();
+
+	std::string today = getCurrentDate();
+
+	for (const auto& product : products)
+	{
+		totalQuantity += product.getQuantity();
+		totalValue += product.getPrice() * product.getQuantity();
+		if (product.getPrice() > maxPrice)
+			maxPrice = product.getPrice();
+		if (product.getPrice() < minPrice)
+			minPrice = product.getPrice();
+
+		if (!product.getExpiryDate().empty())
+		{
+			expiryCount++;
+
+			if (product.getExpiryDate() < today)
+			{
+				expiredCount++;
+			}
+		}
+
+		if (product.getRFID().empty())
+		{
+			noRFIDCount++;
+		}
+
+		if (product.getQuantity() == 0)
+		{
+			outOfStockCount++;
+		}
+		else if (product.getQuantity() <= LOW_STOCK_THRESHOLD)
+		{
+			lowStockCount++;
+		}
+
+	}
+
+	double rfidRate = ((double)(products.size() - noRFIDCount)
+						/ products.size()) * 100;
+	double averagePrice = 0;
+
+	if (totalQuantity > 0)
+	{
+		averagePrice = totalValue / totalQuantity;
+	}
+
+	displayTitle("Inventory Dashboard");
+	std::cout << std::left;
+	std::cout << std::setw(35) << "Total Products" << ": " << products.size() << std::endl;
+	std::cout << std::setw(35) << "Total Quantity" << ": " << totalQuantity << std::endl;
+	std::cout << std::setw(35) << "Inventory Value" << ": RM " << std::fixed << std::setprecision(2) << totalValue << std::endl;
+
+	displayTitle("Inventory Monitoring");
+	std::cout << std::setw(35) << "Low Stock Products" << ": " << lowStockCount << std::endl;
+	std::cout << std::setw(35) << "Out of Stock Products" << ": " << outOfStockCount << std::endl;
+	std::cout << std::setw(35) << "Products with Expiry Date" << ": " << expiryCount << std::endl;
+	std::cout << std::setw(35) << "Expired Products" << ": " << expiredCount << std::endl;
+
+	displayTitle("RFID Monitoring");
+	std::cout << std::setw(35) << "Products without RFID" << ": " << noRFIDCount << std::endl;
+	std::cout << std::setw(35) << "RFID Registration Rate" << ": " << std::fixed << std::setprecision(1) << rfidRate << "%" << std::endl;
+
+	displayTitle("Price Analysis");
+	std::cout << std::setw(35) << "Average Product Price" << ": RM " << averagePrice << std::endl;
+	std::cout << std::setw(35) << "Highest Product Price" << ": RM " << maxPrice << std::endl;
+	std::cout << std::setw(35) << "Lowest Product Price" << ": RM " << minPrice << std::endl;
+
+	displayTitle("System");
+	std::cout << std::setw(35) << "Database Status" << ":"
+		      << (db.getConnection() != nullptr ? "Connected" : "Disconnected")
+		      << std::endl;
+
+	std::cout << std::setw(35) << "RFID Module" << ": Not Connected"
+		      << std::endl;
+
+	std::cout << std::setw(35) << "ESP32 Status" << ": Not Connected"
+		      << std::endl;
+
+	std::cout << "=======================================================================\n";
+
+	pauseScreen("Press Enter to return...");
+}
+//=======================================================================
+//Export report menu
+void Inventory::exportReport()
+{
+	clearScreen();
+
+	displayTitle("Export Report");
+
+	if (exportCSV())
+	{
+		std::cout << "Congratulations! The CSV report exported successfully.\n";
+	}
+	else
+	{
+		std::cout << "Sorry, the CSV export failed. Please try again.\n";
+	}
+
+	if (exportTXT())
+	{
+		std::cout << "Congratulations! The TXT report exported successfully.\n";
+	}
+	else
+	{
+		std::cout << "Sorry, the TXT export failed. Please try again.\n";
+	}
+
+	pauseScreen("Press Enter to return...");
+}
+//=======================================================================
+//Export CSV
+bool Inventory::exportCSV() const
+{
+	std::ofstream file("inventory_report.csv");
+
+	if (!file)
+	{
+		return false;
+	}
+
+	file << "ID," << "Barcode," << "Name," << "Category,"
+		<< "Description," << "Quantity," << "Price," << "Supplier"
+		<< "Expiry Date," << "Manufacture Date\n";
+
+	for (const auto& product : products)
+	{
+		file << product.getID() << ","
+			 << product.getBarcode() << ","
+			 << product.getName() << ","
+			 << product.getCategory() << ","
+			 << product.getDescription() << ","
+			 << product.getQuantity() << ","
+			 << product.getPrice() << ","
+			 << product.getSupplier() << ","
+			 << product.getExpiryDate() << ","
+			 << product.getManufactureDate() << ","
+			 << '\n';
+	}
+
+	return true;
+}
+//Export TXT
+bool Inventory::exportTXT() const
+{
+	std::ofstream file("inventory_report.txt");
+
+	if (!file)
+	{
+		return false;
+	}
+
+	file << "ID," << "Barcode," << "Name," << "Category,"
+		<< "Description," << "Quantity," << "Price," << "Supplier"
+		<< "Expiry Date," << "Manufacture Date\n";
+
+	for (const auto& product : products)
+	{
+		file << product.getID() << ","
+			<< product.getBarcode() << ","
+			<< product.getName() << ","
+			<< product.getCategory() << ","
+			<< product.getDescription() << ","
+			<< product.getQuantity() << ","
+			<< product.getPrice() << ","
+			<< product.getSupplier() << ","
+			<< product.getExpiryDate() << ","
+			<< product.getManufactureDate() << ","
+			<< '\n';
+	}
+
+	return true;
 }
