@@ -44,7 +44,7 @@ int main()
 	{
 		clearScreen();
 		displayMenu();
-		int option = getMenuOption(1, 8);
+		int option = getMenuOption(1, 11);
 
 		switch (option)
 		{
