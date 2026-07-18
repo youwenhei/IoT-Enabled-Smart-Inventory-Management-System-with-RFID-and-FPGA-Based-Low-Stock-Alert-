@@ -2264,9 +2264,11 @@ void Inventory::displayDashboard() const
 		      << std::endl;
 
 	std::cout << std::setw(35) << "RFID Module" << ": Not Connected"
+		      //<< (db.getConnection() != nullptr ? "Connected" : "Disconnected")
 		      << std::endl;
 
 	std::cout << std::setw(35) << "ESP32 Status" << ": Not Connected"
+		      //<< (db.getConnection() != nullptr ? "Connected" : "Disconnected")
 		      << std::endl;
 
 	std::cout << "=======================================================================\n";
@@ -2344,49 +2346,47 @@ bool Inventory::exportTXT() const
 		return false;
 	}
 
-	displayTitle("Smart Inventory Report");
+	file << "=======================================================================\n";
+	file << "Smart Inventory Report\n";
+	file << "=======================================================================\n\n";
 
 	for (const auto& product : products)
 	{
 		file << "Product ID       : " << product.getID() << "\n";
 		file << "Barcode          : " << product.getBarcode() << "\n";
-		file << "RFID UID         : ";
 
 		if (product.getRFID().empty())
-			file << "Not Assigned\n";
+			file << "RFID UID         : N/A\n";
 		else
-			file << product.getRFID() << "\n";
+			file << "RFID UID         : " << product.getRFID() << "\n";
 
 		file << "Product Name     : " << product.getName() << "\n";
 		file << "Description      : " << product.getDescription() << "\n";
 		file << "Category         : " << product.getCategory() << "\n";
 		file << "Quantity         : " << product.getQuantity() << "\n";
-		file << "Price            : RM "
-			<< std::fixed << std::setprecision(2)
+		file << "Price            : RM " << std::fixed << std::setprecision(2)
 			<< product.getPrice() << "\n";
-
 		file << "Supplier         : " << product.getSupplier() << "\n";
 
-		file << "Expiry Date      : ";
-
 		if (product.getExpiryDate().empty())
-			file << "N/A\n";
+			file << "Expiry Date      : N/A\n";
 		else
-			file << product.getExpiryDate() << "\n";
+			file << "Expiry Date      : " << product.getExpiryDate() << "\n";
 
-
-		file << "Manufacture Date : ";
 
 		if (product.getManufactureDate().empty())
-			file << "N/A\n";
+			file << "Manufacture Date : N/A\n";
 		else
-			file << product.getManufactureDate() << "\n";
+			file << "Manufacture Date : "
+			<< product.getManufactureDate() << "\n";
 
 
 		file << "--------------------------------------------\n\n";
 	}
 
-	displayTitle("End of Inventory Report");
+	file << "=======================================================================\n";
+	file << "End of Inventory Report\n";
+	file << "=======================================================================\n";
 
 	return true;
 }
