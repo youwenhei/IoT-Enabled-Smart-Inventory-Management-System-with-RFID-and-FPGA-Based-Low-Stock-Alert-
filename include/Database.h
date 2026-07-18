@@ -14,6 +14,8 @@ public:
 	~Database();
 
 	sql::Connection* getConnection() const;
+
+	bool isConnected();
 };
 
 #endif
