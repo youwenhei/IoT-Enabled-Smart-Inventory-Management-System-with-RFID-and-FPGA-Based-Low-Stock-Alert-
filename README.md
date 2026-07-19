@@ -2,7 +2,74 @@
 
 Project Progress: Still on Progress
 
-Complete Project Name: IoT-Enabled Smart Inventory Management System with RFID, Database, and FPGA-Based Stock Monitoring
+Full Project Name: IoT-Enabled Smart Inventory Management System with RFID, Database, and FPGA-Based Stock Monitoring
+
+Full Project System Architecture：
+
+                           +----------------------+
+                           |      RFID Card       |
+                           +----------+-----------+
+                                      |
+                                      | Scan UID
+                                      |
+                           +----------v-----------+
+                           | RC522 RFID Reader    |
+                           +----------+-----------+
+                                      |
+                                      | SPI
+                                      |
+                           +----------v-----------+
+                           |       ESP32          |
+                           | Read RFID UID        |
+                           | Stock Monitoring     |
+                           | Serial Communication |
+                           +-----+-----------+----+
+                                 |           |
+                    USB Serial    |           | GPIO / UART
+                                 |           |
+                                 |           v
+                                 |   +----------------------+
+                                 |   |        FPGA          |
+                                 |   | Low Stock Detection  |
+                                 |   | LED / Buzzer Alert   |
+                                 |   +----------+-----------+
+                                 |              |
+                                 |      Hardware Alert
+                                 |
++------------------------------------------------------------------------+
+|          RFID-Enabled Smart Inventory Management System                |
+|                  (C++ / Visual Studio 2022)                            |
+|                                                                        |
+|  +-------------------+      +-------------------------------+          |
+|  | RFID Scanner      |----->| Search Product by RFID UID    |          |
+|  +-------------------+      +-------------------------------+          |
+|                                                                        |
+|  +-------------------+      +-------------------------------+          |
+|  | Auto Stock Update |----->| Inventory Management          |          |
+|  | (Scan In / Out)   |      | Add / Update / Delete / Sort  |          |
+|  +-------------------+      +-------------------------------+          |
+|                                                                        |
+|  +-------------------+      +-------------------------------+          |
+|  | Dashboard         |<---->| Real-time Monitoring          |          |
+|  | Statistics        |      | Device Status                 |          |
+|  +-------------------+      +-------------------------------+          |
+|                                                                        |
+|  +-------------------+                                          |
+|  | Report Export     |                                          |
+|  | CSV / TXT         |                                          |
+|  +-------------------+                                          |
+|                                                                        |
+|                 MySQL Connector/C++                                   |
++--------------------------------------+---------------------------------+
+                                       |
+                                       | SQL
+                                       |
+                          +------------v-------------+
+                          |      MySQL Server        |
+                          |   Inventory Database     |
+                          +--------------------------+
+
+---
 
 ## Description
 
@@ -10,7 +77,7 @@ A C++ based smart inventory management system developed using Object-Oriented Pr
 
 The system provides complete product management functionalities with MySQL database integration, inventory dashboard monitoring, and report generation. The system provides inventory management functionalities with MySQL database integration, dashboard monitoring, RFID-based product identification, and IoT device status monitoring.
 
-## System Architecture (Until Version 3.0)
+## Current System Architecture (Until Version 3.0)
 
 Hardware Layer
 ────────────────────────
@@ -33,6 +100,48 @@ Report Module
 Database Layer
 ────────────────────────
 MySQL Database
+
+# In Diagram:
+                     +----------------------+
+                     |      RFID Card       |
+                     +----------+-----------+
+                                |
+                                | Scan UID
+                                |
+                     +----------v-----------+
+                     | RC522 RFID Reader    |
+                     +----------+-----------+
+                                |
+                                | SPI
+                                |
+                     +----------v-----------+
+                     |       ESP32          |
+                     |  Read RFID UID       |
+                     |  Serial Output       |
+                     +----------+-----------+
+                                |
+                        USB Serial (COM Port)
+                                |
+                                |
++-----------------------------------------------------------+
+|                C++ Smart Inventory System                 |
+|                 (Visual Studio 2022)                      |
+|                                                           |
+|  +----------------+   +-------------------------------+   |
+|  | RFID Scanner   |-->| Search Product by RFID UID    |   |
+|  +----------------+   +-------------------------------+   |
+|                                                           |
+|  +----------------+   +-------------------------------+   |
+|  | Inventory      |<->| MySQL Connector/C++           |   |
+|  | Management     |   +---------------+---------------+   |
+|  +----------------+                   |                   |
+|                                       | SQL               |
++---------------------------------------|-------------------+
+                                        |
+                              +---------v----------+
+                              |     MySQL Server   |
+                              |   Product Database |
+                              +--------------------+
 
 ---
 
