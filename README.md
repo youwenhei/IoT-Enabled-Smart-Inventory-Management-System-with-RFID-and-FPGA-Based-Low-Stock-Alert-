@@ -6,7 +6,7 @@ Full Project Name: IoT-Enabled Smart Inventory Management System with RFID, Data
 
 Full Project System Architecture：
 
-
+![Full System Architecture](screenshots/system_architecture/full_system_architecture.png)
 
 ---
 
@@ -42,7 +42,7 @@ MySQL Database
 
 # In Diagram:
 
-
+![Version 3.0 System Architecture](screenshots/system_architecture/v3.0_system_architecture.png)
 
 ---
 
